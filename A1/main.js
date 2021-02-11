@@ -216,6 +216,14 @@ function gPush() {
     MS.push(modelMatrix);
 }
 
+function createSeaweedStrand() {
+    setColor(vec4(0, 0.7, 0, 1.0));
+    gScale(0.25, 0.6, 0.25)
+    for (let i = 0; i < 10; i++) {
+        drawSphere()
+        gTranslate(0, 2, 0)
+    }
+}
 
 
 function render() {
@@ -257,10 +265,40 @@ function render() {
     gTranslate(-4, 0, 0);
     gPush();
     {
-        setColor(vec4(0.25, 0.25, 0.25, 1.0));
-        var ySphere = 3 * Math.cos(TIME + 3.14159 / 2)
-        gTranslate(0, ySphere, 0)
+        setColor(vec4(0.35, 0.35, 0.35, 1.0));
+        // var ySphere = 3 * Math.cos(TIME + 3.14159 / 2)
+        // gTranslate(0, ySphere, 0)
+        gTranslate(3.5, -3.4, 0)
+        gScale(0.6, 0.6, 1)
         drawSphere();
+        // Push coords of big rock and shift over to create small rock
+        gPush();
+        {
+            gTranslate(-1.5, -0.5, 0);
+            gScale(0.5, 0.5, 1)
+            drawSphere();
+        }
+        gPop();
+        // Located back at large rock
+        gPush()
+        {
+            gTranslate(0, 1.5, 0)
+            createSeaweedStrand();
+        }
+        gPop()
+        gPush()
+        {
+            gTranslate(-1, 0.5, 0)
+            createSeaweedStrand()
+        }
+        gPop();
+        gPush()
+        {
+            gTranslate(1, 0.5, 0)
+            createSeaweedStrand()
+        }
+        gPop();
+
     }
     gPop();
 
