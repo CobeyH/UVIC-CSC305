@@ -243,27 +243,55 @@ function createFishHead() {
     gTranslate(0, 2, 0)
     gPush()
     {
-        const rotation = -TIME * 180 / Math.PI;
+        let rotation = -TIME * 180 / Math.PI;
         gRotate(rotation, 0, 1, 0);
-        gTranslate(0, 0, -4)
+        let vDisplacement = 1.5 * Math.cos(TIME) 
+        gTranslate(0, vDisplacement, -4)
         gRotate(90, 0, 1, 0)
         drawCone();
         createFishBody();
+        createFishTail();
     }
     gPop()
+
 }
 
 function createFishBody() {
-    gScale(1, 1, 3)
-    gTranslate(0, 0, -0.66)
-    gRotate(180, 0, 1, 0)
-    drawCone();
+    gPush();
+    {
+        setColor(vec4(0.4, 0, 0, 1.0));
+        gScale(1, 1, 3)
+        gTranslate(0, 0, -0.66)
+        gRotate(180, 0, 1, 0)
+        drawCone();
+    }
+    gPop();
+}
+
+function createFishTail() {
+    gPush();
+    {
+        // Upper tail segment
+        setColor(vec4(0.4, 0, 0, 1.0));
+        gTranslate(0, 0, -3)
+        gPush()
+        gRotate(-120, 1, 0, 0)
+        gScale(0.25, 0.25, 1.5)
+        gTranslate(0, 1, 0.5)
+        drawCone();
+        gPop()
+        // Lower Tail Segment
+        gRotate(120, 1, 0, 0)
+        gScale(0.25, 0.25, 1)
+        gTranslate(0, -1, 0.5)
+        drawCone();
+    }
+    gPop();
 }
 
 function createFish() {
     gPush()
     createFishHead()
-
     gPop()
 }
 
