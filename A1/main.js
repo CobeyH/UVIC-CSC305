@@ -245,15 +245,38 @@ function createFishHead() {
     {
         let rotation = -TIME * 180 / Math.PI;
         gRotate(rotation, 0, 1, 0);
-        let vDisplacement = 1.5 * Math.cos(TIME) 
+        let vDisplacement = 1.5 * Math.cos(TIME)
         gTranslate(0, vDisplacement, -4)
         gRotate(90, 0, 1, 0)
         drawCone();
+        createFishEyes();
         createFishBody();
         createFishTail();
     }
     gPop()
 
+}
+
+function createFishEyes() {
+    gPush();
+    function drawEye() {
+        gPush();
+        {   
+            setColor(vec4(1, 1, 1, 1.0))
+            gScale(0.2, 0.2, 0.2)
+            drawSphere();
+            gTranslate(0, 0, 0.75)
+            setColor(vec4(0, 0, 0, 1.0))
+            gScale(0.5, 0.5, 0.5)
+            drawSphere();
+        }
+        gPop();
+    }
+    gTranslate(0.4,0.5, 0.1)
+    drawEye();
+    gTranslate(-0.9, 0, 0)
+    drawEye();
+    gPop();
 }
 
 function createFishBody() {
@@ -275,15 +298,17 @@ function createFishTail() {
         setColor(vec4(0.4, 0, 0, 1.0));
         gTranslate(0, 0, -3)
         gPush()
+        gRotate(40 * Math.sin(TIME * 2.5 * Math.PI), 0, 1, 0)
         gRotate(-120, 1, 0, 0)
         gScale(0.25, 0.25, 1.5)
-        gTranslate(0, 1, 0.5)
+        gTranslate(0, 1, 0.60)
         drawCone();
         gPop()
         // Lower Tail Segment
+        gRotate(40 * Math.sin(TIME * 2.5 * Math.PI), 0, 1, 0)
         gRotate(120, 1, 0, 0)
         gScale(0.25, 0.25, 1)
-        gTranslate(0, -1, 0.5)
+        gTranslate(0, -1, 0.68)
         drawCone();
     }
     gPop();
@@ -304,6 +329,66 @@ function createGroundBox() {
         drawCube();
     }
     gPop();
+}
+
+function createDiver() {
+    gPush();
+    setColor(vec4(0.4, 0, 0.6, 1.0));
+    // Create Body
+
+    let yDisplacement = 2 * Math.sin(TIME / 2)
+    let xDisplacement = Math.sin(TIME / 2)
+    gTranslate(7 + xDisplacement, 5 + yDisplacement, 0)
+    gPush()
+    {
+        gScale(0.8, 1.3, 0.6)
+        gRotate(-15, 0, 1, 0)
+        drawCube();
+        // Create legs
+        gTranslate(-0.6, 0, 0)
+        gScale(1 / 0.8, 1 / 1.3, 1 / 0.5)
+        createLeg("left");
+        gTranslate(1, 0, 0)
+        createLeg("right");
+    }
+    gPop()
+    // Create Head
+    gScale(0.5, 0.5, 0.5)
+    gTranslate(0, 3.6, 0)
+    drawSphere();
+    gPop();
+}
+
+function createLeg(leg) {
+    const rotationFactor = leg == "left" ? 10 * Math.sin(TIME) : - 10 * Math.sin(TIME)
+    gPush()
+    {
+        // Upper leg creation
+        gTranslate(0, -1, 0)
+        gRotate(45 - rotationFactor, 1, 0, 0)
+        gTranslate(0, -1.05, 0)
+        gPush()
+        {
+            gScale(0.18, 0.75, 0.18)
+            drawCube()
+        }
+        gPop();
+        // Lower leg creation
+        gTranslate(0, -0.9, 0)
+        gRotate(30 - rotationFactor, 1, 0, 0)
+        gTranslate(0, -0.6, 0)
+        gPush();
+        {
+            gScale(0.18, 0.75, 0.18)
+            drawCube()
+        }
+        gPop();
+        // Foot Creation
+        gTranslate(0, -0.75, 0.2)
+        gScale(0.15, 0.15, 0.55)
+        drawCube();
+    }
+    gPop()
 }
 
 
@@ -363,6 +448,7 @@ function render() {
         // Located back at large rock
         createSeaweedStrands();
         createFish();
+        createDiver();
     }
     gPop();
 
