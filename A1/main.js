@@ -216,22 +216,49 @@ function gPush() {
     MS.push(modelMatrix);
 }
 
-function createOneStrand() {
-    setColor(vec4(0, 0.7, 0, 1.0));
-    gScale(0.25, 0.6, 0.25)
+function getRotationAmount(strandIndex, segmentIndex) {
+    const counterClockwise = 3 * Math.sin(TIME)
+    const clockwise = - 3 * Math.sin(TIME)
+    switch (segmentIndex % 5) {
+        case 0:
+            return 10 + clockwise
+        case 1:
+            return 10 + clockwise
+        case 2:
+            return - 10 + counterClockwise
+        case 3:
+            return - 10 + clockwise
+        case 4:
+            return - 10 + clockwise
+
+        default:
+            console.log("Entered invalid location in switch statement. Segment index is " + segmentIndex)
+            break;
+    }
+}
+
+function createOneStrand(strandIndex) {
+    setColor(vec4(0, 0.5, 0, 1.0));
     for (let i = 0; i < 10; i++) {
-        drawSphere()
-        gTranslate(0, 2, 0)
+        gPush();
+        {
+            gScale(0.2, 0.5, 0.2)
+            drawSphere()
+        }
+        gPop();
+        gTranslate(0, 1, 0)
+        const rotationAmount = getRotationAmount(strandIndex, i)
+        gRotate(rotationAmount, 0, 0, 1)
     }
 }
 
 function createSeaweedStrands() {
     const startPositions = [[0, 1.5, 0], [-1, 0.5, 0], [1, 0.5, 0]]
-    startPositions.forEach(startPoint => {
+    startPositions.forEach((startPoint, i) => {
         gPush()
         {
             gTranslate(...startPoint)
-            createOneStrand();
+            createOneStrand(i);
         }
         gPop();
     })
@@ -261,7 +288,7 @@ function createFishEyes() {
     gPush();
     function drawEye() {
         gPush();
-        {   
+        {
             setColor(vec4(1, 1, 1, 1.0))
             gScale(0.2, 0.2, 0.2)
             drawSphere();
@@ -272,7 +299,7 @@ function createFishEyes() {
         }
         gPop();
     }
-    gTranslate(0.4,0.5, 0.1)
+    gTranslate(0.4, 0.5, 0.1)
     drawEye();
     gTranslate(-0.9, 0, 0)
     drawEye();
