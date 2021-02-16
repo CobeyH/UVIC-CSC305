@@ -216,28 +216,9 @@ function gPush() {
     MS.push(modelMatrix);
 }
 
-function getRotationAmount(strandIndex, segmentIndex) {
-    const counterClockwise = 3 * Math.sin(TIME)
-    const clockwise = - 3 * Math.sin(TIME)
-    switch (segmentIndex % 5) {
-        case 0:
-            return 10 + clockwise
-        case 1:
-            return 10 + clockwise
-        case 2:
-            return - 10 + counterClockwise
-        case 3:
-            return - 10 + clockwise
-        case 4:
-            return - 10 + clockwise
-
-        default:
-            console.log("Entered invalid location in switch statement. Segment index is " + segmentIndex)
-            break;
-    }
-}
-
-function createOneStrand(strandIndex) {
+// Generates one strand of seaweed containing 10 segments.
+// The position of the first segment must be sent before calling the function
+function createOneStrand() {
     setColor(vec4(0, 0.5, 0, 1.0));
     for (let i = 0; i < 10; i++) {
         gPush();
@@ -246,35 +227,43 @@ function createOneStrand(strandIndex) {
             drawSphere()
         }
         gPop();
-        gTranslate(0, 1, 0)
-        const rotationAmount = getRotationAmount(strandIndex, i)
+        const rotationAmount = 17 * Math.cos(i * 20 + TIME)
+        gTranslate(0, 0.5, 0)
         gRotate(rotationAmount, 0, 0, 1)
+        gTranslate(0, 0.5, 0)
     }
 }
 
+// Sets the starting point of the seaweed strands and calls the function to generate each strand
+// Does not change the reference point
 function createSeaweedStrands() {
     const startPositions = [[0, 1.5, 0], [-1, 0.5, 0], [1, 0.5, 0]]
-    startPositions.forEach((startPoint, i) => {
+    startPositions.forEach(startPoint => {
         gPush()
         {
             gTranslate(...startPoint)
-            createOneStrand(i);
+            createOneStrand();
         }
         gPop();
     })
 }
 
-function createFishHead() {
-    setColor(vec4(0.5, 0.5, 0.5, 1.0));
-    // Create the initial position and rotation of the fish head
-    gTranslate(0, 2, 0)
+// Creates the fish object and handles fish animation
+function createFish() {
     gPush()
     {
+        setColor(vec4(0.5, 0.5, 0.5, 1.0));
+        // Move the fish up to the correct starting point
+        gTranslate(0, 2, 0)
+        // Set up the rotation around the seaweed
         let rotation = -TIME * 180 / Math.PI;
         gRotate(rotation, 0, 1, 0);
+        // Setup up and down movement of fish
         let vDisplacement = 1.5 * Math.cos(TIME)
         gTranslate(0, vDisplacement, -4)
+        // Rotate fish head so it is facing the correct direction
         gRotate(90, 0, 1, 0)
+        // Draw fish head cone, eyes, body and tail
         drawCone();
         createFishEyes();
         createFishBody();
@@ -284,6 +273,7 @@ function createFishHead() {
 
 }
 
+// Helped function for CreateFish() that creates the fish eyes and pupils
 function createFishEyes() {
     gPush();
     function drawEye() {
@@ -306,6 +296,7 @@ function createFishEyes() {
     gPop();
 }
 
+// Helper function for createFish() that generates the center body cone
 function createFishBody() {
     gPush();
     {
@@ -318,6 +309,7 @@ function createFishBody() {
     gPop();
 }
 
+// Helper function for createFish() that generates the fish tail and tail animation
 function createFishTail() {
     gPush();
     {
@@ -325,14 +317,14 @@ function createFishTail() {
         setColor(vec4(0.4, 0, 0, 1.0));
         gTranslate(0, 0, -3)
         gPush()
-        gRotate(40 * Math.sin(TIME * 2.5 * Math.PI), 0, 1, 0)
+        gRotate(50 * Math.sin(TIME * 2.5 * Math.PI), 0, 1, 0)
         gRotate(-120, 1, 0, 0)
         gScale(0.25, 0.25, 1.5)
         gTranslate(0, 1, 0.60)
         drawCone();
         gPop()
         // Lower Tail Segment
-        gRotate(40 * Math.sin(TIME * 2.5 * Math.PI), 0, 1, 0)
+        gRotate(50 * Math.sin(TIME * 2.5 * Math.PI), 0, 1, 0)
         gRotate(120, 1, 0, 0)
         gScale(0.25, 0.25, 1)
         gTranslate(0, -1, 0.68)
@@ -341,12 +333,7 @@ function createFishTail() {
     gPop();
 }
 
-function createFish() {
-    gPush()
-    createFishHead()
-    gPop()
-}
-
+// Creates the bottom box for the scene
 function createGroundBox() {
     gPush();
     {
@@ -358,35 +345,44 @@ function createGroundBox() {
     gPop();
 }
 
+// Creates the diver character and handles diver animation
 function createDiver() {
     gPush();
-    setColor(vec4(0.4, 0, 0.6, 1.0));
-    // Create Body
-
-    let yDisplacement = 2 * Math.sin(TIME / 2)
-    let xDisplacement = Math.sin(TIME / 2)
-    gTranslate(7 + xDisplacement, 5 + yDisplacement, 0)
-    gPush()
     {
-        gScale(0.8, 1.3, 0.6)
-        gRotate(-15, 0, 1, 0)
-        drawCube();
-        // Create legs
-        gTranslate(-0.6, 0, 0)
-        gScale(1 / 0.8, 1 / 1.3, 1 / 0.5)
-        createLeg("left");
-        gTranslate(1, 0, 0)
-        createLeg("right");
+        setColor(vec4(0.5, 0.3, 0.6, 1.0));
+        // Setup time based displacement
+        let yDisplacement = 2 * Math.sin(TIME / 3)
+        let xDisplacement = Math.sin(TIME / 2)
+        gTranslate(7 + xDisplacement, 6 + yDisplacement, 0)
+        gPush()
+        {
+            // Create body
+            gRotate(-30, 0, 1, 0)
+            gScale(1, 1.5, 0.4)
+            drawCube();
+            // Create legs
+            gTranslate(-0.6, 0, 0)
+            // Revert the previous scaling but keep translations/ rotations
+            gScale(1 / 0.8, 1 / 1.3, 1 / 0.5)
+            createLeg("left");
+            gTranslate(1, 0, 0)
+            createLeg("right");
+        }
+        gPop()
+        // Create Head
+        gScale(0.5, 0.5, 0.5)
+        gTranslate(0, 4, 0)
+        drawSphere();
     }
-    gPop()
-    // Create Head
-    gScale(0.5, 0.5, 0.5)
-    gTranslate(0, 3.6, 0)
-    drawSphere();
     gPop();
 }
 
+/**
+ * Helper function for createDiver() that creates one of the legs for the diver
+ * @param leg Determines if the function should generate the left or right leg 
+ */
 function createLeg(leg) {
+    // The legs must rotate in different directions so the rotation is based on which leg is being created
     const rotationFactor = leg == "left" ? 10 * Math.sin(TIME) : - 10 * Math.sin(TIME)
     gPush()
     {
@@ -416,6 +412,23 @@ function createLeg(leg) {
         drawCube();
     }
     gPop()
+}
+
+// Creates the large rock and the small rock.
+// After this function, the reference point will be located at the center of the large rock
+function createRocks() {
+    setColor(vec4(0.35, 0.35, 0.35, 1.0));
+    gTranslate(3.5, -3.4, 0);
+    gScale(0.6, 0.6, 0.6);
+    drawSphere();
+    // Push coords of big rock and shift over to create small rock
+    gPush();
+    {
+        gTranslate(-1.5, -0.5, 0);
+        gScale(0.5, 0.5, 0.5);
+        drawSphere();
+    }
+    gPop();
 }
 
 
@@ -454,35 +467,18 @@ function render() {
         TIME = TIME + curTime - prevTime;
         prevTime = curTime;
     }
-    //Start Here 
+    // Assignment code starts here
     gTranslate(-4, 0, 0);
     gPush();
     {
-        setColor(vec4(0.35, 0.35, 0.35, 1.0));
-        // var ySphere = 3 * Math.cos(TIME + 3.14159 / 2)
-        // gTranslate(0, ySphere, 0)
-        gTranslate(3.5, -3.4, 0)
-        gScale(0.6, 0.6, 0.6)
-        drawSphere();
-        // Push coords of big rock and shift over to create small rock
-        gPush();
-        {
-            gTranslate(-1.5, -0.5, 0);
-            gScale(0.5, 0.5, 0.5)
-            drawSphere();
-        }
-        gPop();
-        // Located back at large rock
+        createRocks();
         createSeaweedStrands();
         createFish();
         createDiver();
     }
     gPop();
-
-    // Create ground Box
     createGroundBox();
-
-    // Stop Here
+    // Assignment code ends here
     if (animFlag)
         window.requestAnimFrame(render);
 }
