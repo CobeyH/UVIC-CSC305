@@ -49,6 +49,8 @@ var animFlag = false ;
 var prevTime = 0.0 ;
 var useTextures = 1 ;
 
+let treePositions = [];
+
 // ------------ Images for textures stuff --------------
 var texSize = 64;
 
@@ -296,6 +298,12 @@ window.onload = function init() {
     // Recursive wait for the textures to load
     waitForTextures(textureArray) ;
     //setTimeout (render, 100) ;
+
+    for(let i = 0; i < 25; i++) {
+        const xPos = Math.random() * 50
+        const zPos = - 3 - Math.random() * 50
+        treePositions.push([xPos, 0, zPos])
+    }
     
 }
 
@@ -371,15 +379,57 @@ function gPush() {
     MS.push(modelMatrix) ;
 }
 
-function createCar() {
-    gPush() ;
+function createWheels() {
+    gPush();
     {
-        gTranslate(3,0,0);
-        setColor(vec4(0.0,1.0,0.0,1.0));
-        gScale(2.0, 0.5, 1.0);
-        drawCube() ;
+        gTranslate(1.8, -0.5, -0.45);
+        gScale(0.25, 0.25, 0.075)
+        drawSphere();
+        gTranslate(0.0, 0.0, 12)
+        drawSphere();
+        gTranslate(-14.5, 0.0, 0)
+        drawSphere();
+        gTranslate(0.0, 0.0, -12)
+        drawSphere();
     }
-    gPop() ;
+    gPop();
+}
+
+function createCar() {
+    gPush();
+    {
+        gTranslate(TIME,0,0);
+        setColor(vec4(0.0,1.0,0.0,1.0));
+        gPush() 
+        {
+            gScale(2.0, 0.5, 0.4);
+            drawCube();
+        }
+        gPop();
+        createWheels();
+    }
+    gPop();
+}
+
+function createTree() {
+    gPush()
+    {
+        gRotate(-90, 1, 0, 0);
+        // Create Tree trunk
+        gPush()
+        gScale(0.4,0.4,0.5);
+        drawCylinder()
+        gPop();
+        // Create tree body segments
+        gScale(0.6,0.6, 1);
+        gTranslate(0, 0, 0.25)
+        for(let i = 0; i < 4; i++) {
+            gTranslate(0, 0, 0.4)
+            gScale(0.9, 0.9, 0.9)
+            drawCone();
+        }
+    }
+    gPop()
 }
 
 function render() {
@@ -387,7 +437,7 @@ function render() {
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
     
-    eye = vec3(0,0,10);
+    eye = vec3(TIME,1,10);
     eye[1] = eye[1] + 0 ;
    
     // set the projection matrix
@@ -404,6 +454,9 @@ function render() {
     gRotate(RZ,0,0,1) ;
     gRotate(RY,0,1,0) ;
     gRotate(RX,1,0,0) ;
+
+    // Compensate for canvas scale
+    gScale(0.5, 1.0, 1.0);
     
     // send all the matrices to the shaders
     setAllMatrices() ;
@@ -434,40 +487,30 @@ function render() {
     gl.bindTexture(gl.TEXTURE_2D, textureArray[2].textureWebGL);
     gl.uniform1i(gl.getUniformLocation(program, "texture3"), 2);
     
-    
-    gTranslate(-4,0,0) ;
-    gPush() ;
+    gPush();
     {
-        gRotate(TIME*180/3.14159,0,1,0) ;
-        setColor(vec4(1.0,0.0,0.0,1.0)) ;
-        drawSphere() ;
+        gTranslate(0, -5, 0)
+        gScale(500, 1, 500)
+        drawCube()
     }
-    gPop() ;
+    gPop();
+    gTranslate(0, -3.2, 0)
     createCar();
-    
-   
-    
-    gPush() ;
-    {
-        gTranslate(5,0,0) ;
-        setColor(vec4(0.0,1.0,1.0,1.0)) ;
-        gRotate(TIME*180/3.14159,0,1,0) ;
-        drawCylinder() ;
+    gTranslate(-4.5, 0, 0);
+    createCar();
+    // Create Forest
+    for(let i = 0; i < 25; i++) {
+        gPush()
+        gTranslate(...treePositions[i]);
+        createTree();
+        gPop();
     }
-    gPop() ;
+
     
-    // at = vec3(0, 2*Math.cos(TIME), 0);
-    // lookAt(eye, at, up);
-    // setMV();
     
-    gPush() ;
-    {
-        gTranslate(7,0,0) ;
-        setColor(vec4(1.0,1.0,0.0,1.0)) ;
-        gRotate(TIME*180/3.14159,0,1,0) ;
-        drawCone() ;
-    }
-    gPop() ;
+    at = vec3(TIME, 0, 0);
+    lookAt(eye, at, up);
+    setMV();
     
     if( animFlag )
         window.requestAnimFrame(render);
