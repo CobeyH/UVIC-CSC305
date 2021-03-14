@@ -29,7 +29,7 @@ var modelMatrix, viewMatrix;
 var modelViewMatrix, projectionMatrix, normalMatrix;
 var modelViewMatrixLoc, projectionMatrixLoc, normalMatrixLoc;
 var eye;
-var at = vec3(0.0, 0.0, 0.0);
+var at = vec3(0.0, 2.0, 0.0);
 var up = vec3(0.0, 1.0, 0.0);
 
 var RX = 0;
@@ -45,6 +45,7 @@ var prevTime = 0.0;
 var useTextures = 1;
 
 let treePositions = [];
+let mountainPositions = [];
 let trackerStartTime = 0.0;
 let frameCount = 0;
 
@@ -309,6 +310,9 @@ window.onload = function init() {
     const xPos = Math.random() * 50;
     const zPos = -3 - Math.random() * 50;
     treePositions.push([xPos, 0, zPos]);
+    xMPos = -10 + Math.random() * 10 + i * 3
+    zMPos = - 50 - Math.random() * 20
+    mountainPositions.push([xMPos, 0, zMPos])
   }
 };
 
@@ -386,12 +390,14 @@ function gPush() {
 function createWheels() {
   gPush();
   {
-    gTranslate(1.8, -0.5, -0.45);
+    // Front wheels
+    gTranslate(1.6, -0.5, -0.45);
     gScale(0.25, 0.25, 0.075);
     drawSphere();
     gTranslate(0.0, 0.0, 12);
     drawSphere();
-    gTranslate(-14.5, 0.0, 0);
+    // Back wheels
+    gTranslate(-13, 0.0, 0);
     drawSphere();
     gTranslate(0.0, 0.0, -12);
     drawSphere();
@@ -402,7 +408,6 @@ function createWheels() {
 function createCar() {
   gPush();
   {
-    gTranslate(TIME, 0, 0);
     gPush();
     {
       gScale(2.0, 0.5, 0.4);
@@ -454,14 +459,13 @@ function createLocomotiveWheels() {
     gPop();
     gPush();
     {
-        gTranslate(1.25, -0.1, 0)
-        gScale(0.3, 0.3, 0.075);
-        drawSphere();
+      gTranslate(1.25, -0.1, 0);
+      gScale(0.3, 0.3, 0.075);
+      drawSphere();
     }
-    gPop()
+    gPop();
   }
   gPop();
-
 }
 
 function createLocomotive() {
@@ -470,7 +474,6 @@ function createLocomotive() {
     // Create Main locomotive body
     setColor(vec4(0.5, 0.5, 0.5, 1.0));
     gRotate(90, 0, 1, 0);
-    gTranslate(0, 0, TIME);
     gPush();
     {
       gScale(1, 1, 3);
@@ -508,7 +511,7 @@ function createLocomotive() {
       gTranslate(0, 0, 2);
       gScale(0.5, 0.5, 1);
       gRotate(25, 1, 0, 0);
-      gTranslate(0, -0.6, -0.1);
+      gTranslate(0, -0.7, -0.1);
       gScale(0.8, 0.8, 1);
       drawCone();
     }
@@ -518,32 +521,72 @@ function createLocomotive() {
   gPop();
 }
 
-function createTree() {
+function addTrainCoupler() {
   gPush();
   {
-    setColor(vec4(0.0, 1.0, 0.0, 1.0));
-    gRotate(-90, 1, 0, 0);
-    // Create Tree trunk
-    gPush();
-    gScale(0.4, 0.4, 0.5);
-    drawCylinder();
-    gPop();
-    // Create tree body segments
-    gScale(0.6, 0.6, 1);
-    gTranslate(0, 0, 0.25);
-    for (let i = 0; i < 4; i++) {
-      gTranslate(0, 0, 0.4);
-      gScale(0.9, 0.9, 0.9);
-      drawCone();
-    }
+    gTranslate(-1, -0.25, 0);
+    gScale(1, 0.1, 0.1);
+    drawCube();
   }
   gPop();
 }
 
+function buildTrain() {
+    gPush();
+    {
+      gTranslate(TIME * 2.7, 0, 0);
+      createLocomotive();
+      addTrainCoupler();
+      gTranslate(-4, 0, 0);
+      createCar();
+      for (let i = 0; i < 10; i++) {
+        gTranslate(-1.5, 0, 0);
+        addTrainCoupler();
+        gTranslate(-3, 0, 0);
+        createCar();
+      }
+    }
+    gPop();
+  }
+
+  function createTree() {
+    gPush();
+    {
+      gTranslate(0, -0.5, 0);
+      gRotate(-90, 1, 0, 0);
+      // Create Tree trunk
+      setColor(vec4(0.2, 0.114, 0, 1.0));
+      gPush();
+      gScale(0.4, 0.4, 0.5);
+      drawCylinder();
+      gPop();
+      setColor(vec4(0.0, 0.6, 0.0, 1.0));
+      // Create tree body segments
+      gScale(0.6, 0.6, 1);
+      gTranslate(0, 0, 0.25);
+      for (let i = 0; i < 4; i++) {
+        gTranslate(0, 0, 0.4);
+        gScale(0.9, 0.9, 0.9);
+        drawCone();
+      }
+    }
+    gPop();
+  }
+
+  function createMountain() {
+      gPush();
+      {
+          gRotate(-90, 1, 0, 0)
+          gScale(5, 2, 5)
+          drawCone();
+      }
+      gPop()
+  }
+
 function render() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  eye = vec3(TIME, 1, 10);
+  eye = vec3(TIME, 3, 10);
   eye[1] = eye[1] + 0;
 
   // set the projection matrix
@@ -597,6 +640,7 @@ function render() {
   gl.bindTexture(gl.TEXTURE_2D, textureArray[2].textureWebGL);
   gl.uniform1i(gl.getUniformLocation(program, "texture3"), 2);
 
+  // Add groundbox
   gPush();
   {
     gTranslate(0, -5, 0);
@@ -604,21 +648,24 @@ function render() {
     drawCube();
   }
   gPop();
-  gTranslate(0, -3.2, 0);
-  createLocomotive();
-  gTranslate(-4, 0, 0);
-  createCar();
-  gTranslate(-4.5, 0, 0);
-  createCar();
+  gTranslate(0, -3.2, -10);
+  buildTrain();
   // Create Forest
   for (let i = 0; i < 25; i++) {
     gPush();
     gTranslate(...treePositions[i]);
     createTree();
     gPop();
+    gPush();
+    {
+        gTranslate(...mountainPositions[i])
+        setColor(vec4(0.66, 0.5, 0.25, 1.0));
+        createMountain();
+    }
+    gPop()
   }
 
-  at = vec3(TIME * 0.9, 0, 0);
+  at = vec3(0.95 * TIME, 2, 0);
   lookAt(eye, at, up);
   setMV();
 
