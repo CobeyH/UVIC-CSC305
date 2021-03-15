@@ -129,7 +129,7 @@ function loadImageTexture(tex, image) {
 
 function initTextures() {
   textureArray.push({});
-  loadFileTexture(textureArray[textureArray.length - 1], "sunset.bmp");
+  loadFileTexture(textureArray[textureArray.length - 1], "train.jpg");
 
   textureArray.push({});
   loadFileTexture(textureArray[textureArray.length - 1], "cubetexture.png");
@@ -197,13 +197,13 @@ function toggleTextures() {
 
 function waitForTextures1(tex) {
   setTimeout(function () {
-    // console.log("Waiting for: "+ tex.image.src) ;
+    console.log("Waiting for: "+ tex.image.src) ;
     wtime = new Date().getTime();
     if (!tex.isTextureReady) {
-      // console.log(wtime + " not ready yet") ;
+      console.log(wtime + " not ready yet") ;
       waitForTextures1(tex);
     } else {
-      // console.log("ready to render") ;
+      console.log("ready to render") ;
       window.requestAnimFrame(render);
     }
   }, 5);
@@ -214,15 +214,15 @@ function waitForTextures(texs) {
   setTimeout(function () {
     var n = 0;
     for (var i = 0; i < texs.length; i++) {
-      // console.log("boo"+texs[i].image.src) ;
+      console.log("boo"+texs[i].image.src) ;
       n = n + texs[i].isTextureReady;
     }
     wtime = new Date().getTime();
     if (n != texs.length) {
-      //    console.log(wtime + " not ready yet") ;
+      console.log(wtime + " not ready yet") ;
       waitForTextures(texs);
     } else {
-      //    console.log("ready to render") ;
+      console.log("ready to render") ;
       window.requestAnimFrame(render);
     }
   }, 5);
@@ -537,8 +537,10 @@ function buildTrain() {
       gTranslate(TIME * 2.7, 0, 0);
       createLocomotive();
       addTrainCoupler();
-      gTranslate(-4, 0, 0);
-      createCar();
+      toggleTextures()
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, textureArray[0].textureWebGL);
+      gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
       for (let i = 0; i < 10; i++) {
         gTranslate(-1.5, 0, 0);
         addTrainCoupler();
@@ -546,6 +548,7 @@ function buildTrain() {
         createCar();
       }
     }
+    toggleTextures();
     gPop();
   }
 
@@ -627,18 +630,6 @@ function render() {
       frameCount = 0;
     }
   }
-
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, textureArray[0].textureWebGL);
-  gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
-
-  gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D, textureArray[1].textureWebGL);
-  gl.uniform1i(gl.getUniformLocation(program, "texture2"), 1);
-
-  gl.activeTexture(gl.TEXTURE2);
-  gl.bindTexture(gl.TEXTURE_2D, textureArray[2].textureWebGL);
-  gl.uniform1i(gl.getUniformLocation(program, "texture3"), 2);
 
   // Add groundbox
   gPush();

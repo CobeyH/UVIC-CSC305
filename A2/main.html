@@ -90,7 +90,7 @@ main()
         c1 = texture( texture1, fTexCoord );
         c2 = texture( texture2, fTexCoord );
         c3 = texture( texture3, fTexCoord );
-        fragColor = mix(c3,mix(c1,c2,0.5),0.7);
+        fragColor = mix(c1, c1, c1);
     }
     fragColor.a = 1.0 ;
 
