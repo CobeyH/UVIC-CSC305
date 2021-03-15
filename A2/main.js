@@ -503,6 +503,9 @@ function createLocomotive() {
       gRotate(90, 1, 0, 0);
       gScale(0.4, 0.4, 0.5);
       drawCylinder();
+      gTranslate(0, 0, -1.4)
+      gScale(0.5, 0.5, 1)
+      drawSphere();
     }
     gPop();
     // Create cow plow
@@ -655,6 +658,7 @@ function render() {
     }
     gPop()
   }
+  gl.uniform1f(gl.getUniformLocation(program, "time"), TIME);
 
   at = vec3(0.95 * TIME, 2, 0);
   lookAt(eye, at, up);
