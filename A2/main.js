@@ -132,10 +132,10 @@ function initTextures() {
   loadFileTexture(textureArray[textureArray.length - 1], "train.jpg");
 
   textureArray.push({});
-  loadFileTexture(textureArray[textureArray.length - 1], "cubetexture.png");
+  loadFileTexture(textureArray[textureArray.length - 1], "locomotive.jpg");
 
   textureArray.push({});
-  loadImageTexture(textureArray[textureArray.length - 1], image2);
+  loadFileTexture(textureArray[textureArray.length - 1], "tree.jpeg");
 }
 
 function handleTextureLoaded(textureObj) {
@@ -197,13 +197,13 @@ function toggleTextures() {
 
 function waitForTextures1(tex) {
   setTimeout(function () {
-    console.log("Waiting for: "+ tex.image.src) ;
+    console.log("Waiting for: " + tex.image.src);
     wtime = new Date().getTime();
     if (!tex.isTextureReady) {
-      console.log(wtime + " not ready yet") ;
+      console.log(wtime + " not ready yet");
       waitForTextures1(tex);
     } else {
-      console.log("ready to render") ;
+      console.log("ready to render");
       window.requestAnimFrame(render);
     }
   }, 5);
@@ -214,15 +214,15 @@ function waitForTextures(texs) {
   setTimeout(function () {
     var n = 0;
     for (var i = 0; i < texs.length; i++) {
-      console.log("boo"+texs[i].image.src) ;
+      console.log("boo" + texs[i].image.src);
       n = n + texs[i].isTextureReady;
     }
     wtime = new Date().getTime();
     if (n != texs.length) {
-      console.log(wtime + " not ready yet") ;
+      console.log(wtime + " not ready yet");
       waitForTextures(texs);
     } else {
-      console.log("ready to render") ;
+      console.log("ready to render");
       window.requestAnimFrame(render);
     }
   }, 5);
@@ -310,9 +310,9 @@ window.onload = function init() {
     const xPos = Math.random() * 50;
     const zPos = -3 - Math.random() * 50;
     treePositions.push([xPos, 0, zPos]);
-    xMPos = -10 + Math.random() * 10 + i * 3
-    zMPos = - 50 - Math.random() * 20
-    mountainPositions.push([xMPos, 0, zMPos])
+    xMPos = -10 + Math.random() * 10 + i * 3;
+    zMPos = -50 - Math.random() * 20;
+    mountainPositions.push([xMPos, 0, zMPos]);
   }
 };
 
@@ -388,21 +388,28 @@ function gPush() {
 }
 
 function createWheels() {
+  const wheelPositions = [
+    [0.0, 0.0, 12],
+    [-13, 0.0, 0],
+    [0.0, 0.0, -12],
+  ];  
   gPush();
   {
-    // Front wheels
-    gTranslate(1.6, -0.5, -0.45);
-    gScale(0.25, 0.25, 0.075);
-    drawSphere();
-    gTranslate(0.0, 0.0, 12);
-    drawSphere();
-    // Back wheels
-    gTranslate(-13, 0.0, 0);
-    drawSphere();
-    gTranslate(0.0, 0.0, -12);
-    drawSphere();
+  gTranslate(1.6, -0.5, -0.45)
+  gScale(0.25, 0.25, 0.075);
+  wheelPositions.forEach(wheelPosition => {
+  
+      gTranslate(...wheelPosition);
+      console.log(...wheelPosition)
+      gPush()
+      gRotate(-400 * TIME, 0, 0, 1);
+      drawSphere();
+      gPop();
+  })
+ 
   }
-  gPop();
+gPop();
+
 }
 
 function createCar() {
@@ -470,6 +477,10 @@ function createLocomotiveWheels() {
 
 function createLocomotive() {
   gPush();
+  toggleTextures();
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, textureArray[1].textureWebGL);
+  gl.uniform1i(gl.getUniformLocation(program, "texture1"), 1);
   {
     // Create Main locomotive body
     setColor(vec4(0.5, 0.5, 0.5, 1.0));
@@ -503,8 +514,8 @@ function createLocomotive() {
       gRotate(90, 1, 0, 0);
       gScale(0.4, 0.4, 0.5);
       drawCylinder();
-      gTranslate(0, 0, -1.4)
-      gScale(0.5, 0.5, 1)
+      gTranslate(0, 0, -1.4);
+      gScale(0.5, 0.5, 1);
       drawSphere();
     }
     gPop();
@@ -521,6 +532,7 @@ function createLocomotive() {
     gPop();
     createLocomotiveWheels();
   }
+  toggleTextures();
   gPop();
 }
 
@@ -535,61 +547,66 @@ function addTrainCoupler() {
 }
 
 function buildTrain() {
-    gPush();
-    {
-      gTranslate(TIME * 2.7, 0, 0);
-      createLocomotive();
-      addTrainCoupler();
-      toggleTextures()
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, textureArray[0].textureWebGL);
-      gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
-      for (let i = 0; i < 10; i++) {
-        gTranslate(-1.5, 0, 0);
-        addTrainCoupler();
-        gTranslate(-3, 0, 0);
-        createCar();
-      }
-    }
+  gPush();
+  {
+    gTranslate(TIME * 2.7, 0, 0);
+    createLocomotive();
     toggleTextures();
-    gPop();
-  }
-
-  function createTree() {
-    gPush();
-    {
-      gTranslate(0, -0.5, 0);
-      gRotate(-90, 1, 0, 0);
-      // Create Tree trunk
-      setColor(vec4(0.2, 0.114, 0, 1.0));
-      gPush();
-      gScale(0.4, 0.4, 0.5);
-      drawCylinder();
-      gPop();
-      setColor(vec4(0.0, 0.6, 0.0, 1.0));
-      // Create tree body segments
-      gScale(0.6, 0.6, 1);
-      gTranslate(0, 0, 0.25);
-      for (let i = 0; i < 4; i++) {
-        gTranslate(0, 0, 0.4);
-        gScale(0.9, 0.9, 0.9);
-        drawCone();
-      }
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, textureArray[0].textureWebGL);
+    gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
+    for (let i = 0; i < 10; i++) {
+      gTranslate(-1.5, 0, 0);
+      addTrainCoupler();
+      gTranslate(-3, 0, 0);
+      createCar();
     }
-    gPop();
   }
+  toggleTextures();
+  gPop();
+}
 
-  function createMountain() {
-      gPush();
-      {
-          gRotate(-90, 1, 0, 0)
-          gScale(5, 2, 5)
-          drawCone();
-      }
-      gPop()
+function createTree() {
+  gPush();
+  {
+    gTranslate(0, -0.5, 0);
+    gRotate(-90, 1, 0, 0);
+    // Create Tree trunk
+    setColor(vec4(0.2, 0.114, 0, 1.0));
+    gPush();
+    gScale(0.4, 0.4, 0.5);
+    drawCylinder();
+    gPop();
+    setColor(vec4(0.0, 0.6, 0.0, 1.0));
+    toggleTextures();
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, textureArray[2].textureWebGL);
+    gl.uniform1i(gl.getUniformLocation(program, "texture1"), 2);
+    // Create tree body segments
+    gScale(0.6, 0.6, 1);
+    gTranslate(0, 0, 0.25);
+    for (let i = 0; i < 4; i++) {
+      gTranslate(0, 0, 0.4);
+      gScale(0.9, 0.9, 0.9);
+      drawCone();
+    }
   }
+  gPop();
+  toggleTextures();
+}
+
+function createMountain() {
+  gPush();
+  {
+    gRotate(-90, 1, 0, 0);
+    gScale(5, 2, 5);
+    drawCone();
+  }
+  gPop();
+}
 
 function render() {
+  toggleTextures();
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   eye = vec3(TIME, 3, 10);
@@ -652,11 +669,11 @@ function render() {
     gPop();
     gPush();
     {
-        gTranslate(...mountainPositions[i])
-        setColor(vec4(0.66, 0.5, 0.25, 1.0));
-        createMountain();
+      gTranslate(...mountainPositions[i]);
+      setColor(vec4(0.66, 0.5, 0.25, 1.0));
+      createMountain();
     }
-    gPop()
+    gPop();
   }
   gl.uniform1f(gl.getUniformLocation(program, "time"), TIME);
 
@@ -665,6 +682,7 @@ function render() {
   setMV();
 
   if (animFlag) window.requestAnimFrame(render);
+  toggleTextures();
 }
 
 // A simple camera controller which uses an HTML element as the event

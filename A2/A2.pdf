@@ -13,7 +13,7 @@ Total Marks: 47
     [10 Marks] At least one shader edited or designed from scratch to perform a clearly visible effect. Each line of your shader must be commented clearly explaining exactly what the following line does and why. You must clearly identify the purpose and effect the shader produces in the submitted README.
     [4 Marks] 360 degrees camera fly around using lookAt() and setMV().
     [4 Marks] Connection to real-time. You should make sure that your scene runs in real-time on fast enough machines. Real-time means that one simulated second corresponds roughly to one real second.
-    [2 Marks] You should display the frame rate of your program in the console window or the graphics window once every 2 seconds.
+    (DONE)[2 Marks] You should display the frame rate of your program in the console window or the graphics window once every 2 seconds.
     [5 Marks] Complexity: scene setup and design, movement of animated elements, and programming.
     [5 Marks] Creativity: storytelling, scene design, object appearance and other artistic elements.
     [5 Marks] Quality:  Attention to detail, modeling quality, rendering quality, motion control.
