@@ -48,6 +48,7 @@ let treePositions = [];
 let mountainPositions = [];
 let trackerStartTime = 0.0;
 let frameCount = 0;
+let stopPoint = 27;
 
 // ------------ Images for textures stuff --------------
 var texSize = 64;
@@ -392,23 +393,21 @@ function createWheels() {
     [0.0, 0.0, 12],
     [-13, 0.0, 0],
     [0.0, 0.0, -12],
-  ];  
+  ];
   gPush();
   {
-  gTranslate(1.6, -0.5, -0.45)
-  gScale(0.25, 0.25, 0.075);
-  wheelPositions.forEach(wheelPosition => {
-  
+    gTranslate(1.6, -0.5, -0.45)
+    gScale(0.25, 0.25, 0.075);
+    wheelPositions.forEach(wheelPosition => {
       gTranslate(...wheelPosition);
       console.log(...wheelPosition)
       gPush()
       gRotate(-400 * TIME, 0, 0, 1);
       drawSphere();
       gPop();
-  })
- 
+    })
   }
-gPop();
+  gPop();
 
 }
 
@@ -549,7 +548,14 @@ function addTrainCoupler() {
 function buildTrain() {
   gPush();
   {
+    if(TIME < 10) {
     gTranslate(TIME * 2.7, 0, 0);
+    } else if(TIME < 15) {
+      stopPoint = stopPoint + (15-TIME)/100
+      gTranslate(stopPoint, 0, 0)
+    } else (
+      gTranslate(stopPoint, 0, 0)
+    )
     createLocomotive();
     toggleTextures();
     gl.activeTexture(gl.TEXTURE0);
@@ -605,11 +611,40 @@ function createMountain() {
   gPop();
 }
 
+function createTrack() {
+  gPush();
+  {
+    gTranslate(1, -0.8, 0.5)
+    gPush()
+    {
+      gScale(50, 0.1, 0.05)
+      drawCube();
+    }
+    gPop()
+    gPush()
+    {
+    gTranslate(0, 0, -0.5)
+    gScale(50, 0.1, 0.05)
+    drawCube()
+    }
+    gPop()
+    gTranslate(-20, 0, -0.25)
+    gScale(0.1, 0.1, 0.4)
+    for(let i = 0; i < 140; i++) {
+      gTranslate(5, 0, 0)
+      drawCube()
+    }
+    
+  }
+  gPop();
+}
+
 function render() {
   toggleTextures();
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   eye = vec3(TIME, 3, 10);
+  
   eye[1] = eye[1] + 0;
 
   // set the projection matrix
@@ -661,6 +696,7 @@ function render() {
   gPop();
   gTranslate(0, -3.2, -10);
   buildTrain();
+  createTrack();
   // Create Forest
   for (let i = 0; i < 25; i++) {
     gPush();
@@ -676,7 +712,6 @@ function render() {
     gPop();
   }
   gl.uniform1f(gl.getUniformLocation(program, "time"), TIME);
-
   at = vec3(0.95 * TIME, 2, 0);
   lookAt(eye, at, up);
   setMV();
