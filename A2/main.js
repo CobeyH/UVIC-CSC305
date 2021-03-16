@@ -43,9 +43,11 @@ var resetTimerFlag = true;
 var animFlag = false;
 var prevTime = 0.0;
 var useTextures = 1;
+var isSkybox = 0;
 
 let treePositions = [];
 let mountainPositions = [];
+let mountainScales = [];
 let trackerStartTime = 0.0;
 let frameCount = 0;
 let stopPoint = 27;
@@ -137,6 +139,12 @@ function initTextures() {
 
   textureArray.push({});
   loadFileTexture(textureArray[textureArray.length - 1], "tree.jpeg");
+
+  textureArray.push({});
+  loadFileTexture(textureArray[textureArray.length - 1], "sun.jpeg");
+
+  textureArray.push({});
+  loadFileTexture(textureArray[textureArray.length - 1], "mountain.jpeg");
 }
 
 function handleTextureLoaded(textureObj) {
@@ -194,6 +202,11 @@ function setColor(c) {
 function toggleTextures() {
   useTextures = 1 - useTextures;
   gl.uniform1i(gl.getUniformLocation(program, "useTextures"), useTextures);
+}
+
+function toggleIsSkybox() {
+  isSkybox = 1 - isSkybox;
+  gl.uniform1i(gl.getUniformLocation(program, "isSkybox"), isSkybox);
 }
 
 function waitForTextures1(tex) {
@@ -314,6 +327,9 @@ window.onload = function init() {
     xMPos = -10 + Math.random() * 10 + i * 3;
     zMPos = -50 - Math.random() * 20;
     mountainPositions.push([xMPos, 0, zMPos]);
+    const mScale = 0.4 + Math.random() * 0.6;
+    console.log("First mScale: ", mScale)
+    mountainScales.push(mScale)
   }
 };
 
@@ -400,7 +416,6 @@ function createWheels() {
     gScale(0.25, 0.25, 0.075);
     wheelPositions.forEach(wheelPosition => {
       gTranslate(...wheelPosition);
-      console.log(...wheelPosition)
       gPush()
       gRotate(-400 * TIME, 0, 0, 1);
       drawSphere();
@@ -426,6 +441,9 @@ function createCar() {
 }
 
 function createLocomotiveWheels() {
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, textureArray[0].textureWebGL);
+  gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
   gPush();
   {
     gTranslate(-0.5, -0.4, -1);
@@ -513,9 +531,9 @@ function createLocomotive() {
       gRotate(90, 1, 0, 0);
       gScale(0.4, 0.4, 0.5);
       drawCylinder();
-      gTranslate(0, 0, -1.4);
-      gScale(0.5, 0.5, 1);
-      drawSphere();
+      gTranslate(0, 0, -0.4);
+      gScale(0.8, 0.8, 0.5);
+      drawCone();
     }
     gPop();
     // Create cow plow
@@ -561,10 +579,11 @@ function buildTrain() {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, textureArray[0].textureWebGL);
     gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
+    gTranslate(0.5, 0, 0,)
     for (let i = 0; i < 10; i++) {
       gTranslate(-1.5, 0, 0);
       addTrainCoupler();
-      gTranslate(-3, 0, 0);
+      gTranslate(-2.7, 0, 0);
       createCar();
     }
   }
@@ -601,14 +620,22 @@ function createTree() {
   toggleTextures();
 }
 
-function createMountain() {
+function createMountain(index) {
+  toggleTextures();
+  gl.activeTexture(gl.TEXTURE4);
+  gl.bindTexture(gl.TEXTURE_2D, textureArray[4].textureWebGL);
+  gl.uniform1i(gl.getUniformLocation(program, "texture1"), 4);
   gPush();
   {
     gRotate(-90, 1, 0, 0);
-    gScale(5, 2, 5);
+    gScale(7, 3, 7);
+    mScale = mountainScales[index]
+    console.log("MScale: ", mScale)
+    gScale(mScale, mScale, mScale)
     drawCone();
   }
   gPop();
+  toggleTextures()
 }
 
 function createTrack() {
@@ -637,6 +664,27 @@ function createTrack() {
     
   }
   gPop();
+}
+
+function createSun() {
+  gPush();
+  toggleTextures()
+  gl.activeTexture(gl.TEXTURE3);
+  gl.bindTexture(gl.TEXTURE_2D, textureArray[3].textureWebGL);
+  gl.uniform1i(gl.getUniformLocation(program, "texture1"), 3);
+  {
+    gTranslate(-5, 0 ,0)
+    let xOffset = -5 + TIME + TIME % (Math.PI * 8);
+    let yOffset = 1.5 * Math.sin(TIME/4);
+    const yPos = yOffset * 171;
+    const xPos = 512 + 46 * (-5 + xOffset)
+    gl.uniform2fv(gl.getUniformLocation(program, "sunPos"), vec2(xOffset, yPos));
+    gTranslate(xOffset, yOffset, -70);
+    gScale(0.5, 0.5, 0.5)
+    drawSphere()
+  }
+  toggleTextures();
+  gPop()
 }
 
 function render() {
@@ -685,15 +733,26 @@ function render() {
       frameCount = 0;
     }
   }
-
   // Add groundbox
   gPush();
   {
+    setColor(vec4(0.2, 0.5, 0.2, 1.0))
     gTranslate(0, -5, 0);
     gScale(500, 1, 500);
     drawCube();
   }
   gPop();
+  // Create skybox
+  gPush();
+  {
+    toggleIsSkybox()
+    setColor(vec4(0, 0, 1, 1.0));
+    gTranslate(30, -2, -80);
+    gScale(50, 2, 0.1);
+    drawCube();
+    toggleIsSkybox()
+  }
+  gPop()
   gTranslate(0, -3.2, -10);
   buildTrain();
   createTrack();
@@ -707,10 +766,11 @@ function render() {
     {
       gTranslate(...mountainPositions[i]);
       setColor(vec4(0.66, 0.5, 0.25, 1.0));
-      createMountain();
+      createMountain(i);
     }
     gPop();
   }
+  createSun();
   gl.uniform1f(gl.getUniformLocation(program, "time"), TIME);
   at = vec3(0.95 * TIME, 2, 0);
   lookAt(eye, at, up);

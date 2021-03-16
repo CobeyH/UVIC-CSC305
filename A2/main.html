@@ -20,7 +20,6 @@ uniform mat4 projectionMatrix;
 uniform vec4 lightPosition;
 uniform float shininess;
 
-
 void
 main()
 {
@@ -68,9 +67,10 @@ precision mediump float;
 
 
 uniform sampler2D texture1;
-uniform int useTextures ;
-uniform int useSmoke;
+uniform int useTextures;
+uniform int isSkybox;
 uniform float time;
+uniform vec2 sunPos;
 
 in vec4 fColor;
 in vec2 fTexCoord ;
@@ -89,6 +89,9 @@ main()
     {
         c1 = texture( texture1, fTexCoord );
         fragColor = c1;
+    }
+    if (isSkybox == 1) {
+        fragColor = vec4(0.001 * sqrt( pow(gl_FragCoord.y + sunPos[1],2.0)), 0.2, 1.0, 1);
     }
     fragColor.a = 1.0;
 
