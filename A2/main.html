@@ -102,6 +102,13 @@ main()
         fragColor = vec4(red, 0.2, 1.0, 1);
     }
 
+    // Ground texturing. The texture doesn't move with the train so the ground appears to move relative to the mountains.
+    /* if( isGround == 1) {
+        // Generate a pseudo-random color between 0.1 and 0.125 
+        float green = 0.1 + 1.0/4.0 * fract(cos(dot(vec2(gl_FragCoord.x, gl_FragCoord.y),vec2(60,20))) * 30000.0);
+        fragColor = vec4(0.1, green, 0.05, 1);
+    } */
+
     fragColor.a = 1.0;
 
 }
