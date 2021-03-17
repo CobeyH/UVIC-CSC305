@@ -645,7 +645,6 @@ function createMountain(index) {
     gRotate(-90, 1, 0, 0);
     gScale(7, 3, 7);
     mScale = mountainScales[index];
-    console.log("MScale: ", mScale);
     gScale(mScale, mScale, mScale);
     drawCone();
   }
@@ -797,8 +796,11 @@ function createGrainDepot() {
 function render() {
   toggleTextures();
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  eye = vec3(TIME, 3, 10);
+  if(TIME <= 17) {
+    eye = vec3(TIME, 3, 10);
+  } else {
+    eye = vec3(17 + 10 * Math.cos(1/2 * Math.PI + (TIME - 17)), 5,  10 * Math.sin(1/2 * Math.PI + (TIME - 17)) )
+  }
 
   eye[1] = eye[1] + 0;
 
@@ -811,6 +813,14 @@ function render() {
   // initialize the modeling matrix stack
   MS = [];
   modelMatrix = mat4();
+
+  if(TIME < 17) {
+    at = vec3(0.95 * TIME, 2, 0);
+  } else {
+    at = vec3(17, 1, -6)
+  }
+  lookAt(eye, at, up);
+  setMV();
 
   // apply the slider rotations
   gRotate(RZ, 0, 0, 1);
@@ -881,9 +891,6 @@ function render() {
   createGrainDepot();
 
   gl.uniform1f(gl.getUniformLocation(program, "time"), TIME);
-  at = vec3(0.95 * TIME, 2, 0);
-  lookAt(eye, at, up);
-  setMV();
 
   if (animFlag) window.requestAnimFrame(render);
   toggleTextures();
