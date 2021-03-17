@@ -48,6 +48,8 @@ var isSkybox = 0;
 let treePositions = [];
 let mountainPositions = [];
 let mountainScales = [];
+let grainPositions = [];
+let grainDropTimes = [];
 let trackerStartTime = 0.0;
 let frameCount = 0;
 let stopPoint = 27;
@@ -328,8 +330,12 @@ window.onload = function init() {
     zMPos = -50 - Math.random() * 20;
     mountainPositions.push([xMPos, 0, zMPos]);
     const mScale = 0.4 + Math.random() * 0.6;
-    console.log("First mScale: ", mScale)
-    mountainScales.push(mScale)
+    mountainScales.push(mScale);
+    const xGPos = 0.2 * Math.random();
+    const zGPos = 0.1 * Math.random();
+    grainPositions.push([xGPos, 0, zGPos]);
+    const dropTime = Math.random() * 2;
+    grainDropTimes.push(dropTime);
   }
 };
 
@@ -410,20 +416,25 @@ function createWheels() {
     [-13, 0.0, 0],
     [0.0, 0.0, -12],
   ];
+  let wheelRotation = 0;
+  if (TIME < 15) {
+    wheelRotation = -400;
+  } else {
+    wheelRotation = 0;
+  }
   gPush();
   {
-    gTranslate(1.6, -0.5, -0.45)
+    gTranslate(1.6, -0.5, -0.45);
     gScale(0.25, 0.25, 0.075);
-    wheelPositions.forEach(wheelPosition => {
+    wheelPositions.forEach((wheelPosition) => {
       gTranslate(...wheelPosition);
-      gPush()
-      gRotate(-400 * TIME, 0, 0, 1);
+      gPush();
+      gRotate(wheelRotation * TIME, 0, 0, 1);
       drawSphere();
       gPop();
-    })
+    });
   }
   gPop();
-
 }
 
 function createCar() {
@@ -444,6 +455,12 @@ function createLocomotiveWheels() {
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, textureArray[0].textureWebGL);
   gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
+  let wheelRotation = 0;
+  if (TIME < 15) {
+    wheelRotation = -360;
+  } else {
+    wheelRotation = 0;
+  }
   gPush();
   {
     gTranslate(-0.5, -0.4, -1);
@@ -451,7 +468,7 @@ function createLocomotiveWheels() {
     gPush();
     {
       // Draw left wheel
-      gRotate(-360 * TIME, 0, 0, 1);
+      gRotate(wheelRotation * TIME, 0, 0, 1);
       gPush();
       {
         gScale(0.4, 0.4, 0.075);
@@ -463,7 +480,7 @@ function createLocomotiveWheels() {
       {
         setColor(vec4(0, 0, 0, 1.0));
         gTranslate(0.3, 0, 0);
-        gRotate(360 * TIME, 0, 0, 1);
+        gRotate(-wheelRotation * TIME, 0, 0, 1);
         gTranslate(0.45, 0, 0);
         gScale(0.5, 0.075, 0.075);
         drawCube();
@@ -476,7 +493,7 @@ function createLocomotiveWheels() {
     gTranslate(1, 0, 0);
     gPush();
     {
-      gRotate(-360 * TIME, 0, 0, 1);
+      gRotate(wheelRotation * TIME, 0, 0, 1);
       gScale(0.4, 0.4, 0.075);
       drawSphere();
     }
@@ -566,20 +583,18 @@ function addTrainCoupler() {
 function buildTrain() {
   gPush();
   {
-    if(TIME < 10) {
-    gTranslate(TIME * 2.7, 0, 0);
-    } else if(TIME < 15) {
-      stopPoint = stopPoint + (15-TIME)/100
-      gTranslate(stopPoint, 0, 0)
-    } else (
-      gTranslate(stopPoint, 0, 0)
-    )
+    if (TIME < 10) {
+      gTranslate(TIME * 2.7, 0, 0);
+    } else if (TIME < 15) {
+      stopPoint = stopPoint + (15 - TIME) / 100;
+      gTranslate(stopPoint, 0, 0);
+    } else gTranslate(stopPoint, 0, 0);
     createLocomotive();
     toggleTextures();
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, textureArray[0].textureWebGL);
     gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
-    gTranslate(0.5, 0, 0,)
+    gTranslate(0.5, 0, 0);
     for (let i = 0; i < 10; i++) {
       gTranslate(-1.5, 0, 0);
       addTrainCoupler();
@@ -629,62 +644,154 @@ function createMountain(index) {
   {
     gRotate(-90, 1, 0, 0);
     gScale(7, 3, 7);
-    mScale = mountainScales[index]
-    console.log("MScale: ", mScale)
-    gScale(mScale, mScale, mScale)
+    mScale = mountainScales[index];
+    console.log("MScale: ", mScale);
+    gScale(mScale, mScale, mScale);
     drawCone();
   }
   gPop();
-  toggleTextures()
+  toggleTextures();
 }
 
 function createTrack() {
   gPush();
   {
-    gTranslate(1, -0.8, 0.5)
-    gPush()
+    gTranslate(1, -0.8, 0.5);
+    gPush();
     {
-      gScale(50, 0.1, 0.05)
+      gScale(50, 0.1, 0.05);
       drawCube();
     }
-    gPop()
-    gPush()
+    gPop();
+    gPush();
     {
-    gTranslate(0, 0, -0.5)
-    gScale(50, 0.1, 0.05)
-    drawCube()
+      gTranslate(0, 0, -0.5);
+      gScale(50, 0.1, 0.05);
+      drawCube();
     }
-    gPop()
-    gTranslate(-20, 0, -0.25)
-    gScale(0.1, 0.1, 0.4)
-    for(let i = 0; i < 140; i++) {
-      gTranslate(5, 0, 0)
-      drawCube()
+    gPop();
+    gTranslate(-20, 0, -0.25);
+    gScale(0.1, 0.1, 0.4);
+    for (let i = 0; i < 140; i++) {
+      gTranslate(5, 0, 0);
+      drawCube();
     }
-    
   }
   gPop();
 }
 
 function createSun() {
   gPush();
-  toggleTextures()
+  toggleTextures();
   gl.activeTexture(gl.TEXTURE3);
   gl.bindTexture(gl.TEXTURE_2D, textureArray[3].textureWebGL);
   gl.uniform1i(gl.getUniformLocation(program, "texture1"), 3);
   {
-    gTranslate(-5, 0 ,0)
-    let xOffset = -5 + TIME + TIME % (Math.PI * 8);
-    let yOffset = 1.5 * Math.sin(TIME/4);
+    gTranslate(-5, 0, 0);
+    let xOffset = -5 + TIME + (TIME % (Math.PI * 8));
+    let yOffset = 1.5 * Math.sin(TIME / 4);
     const yPos = yOffset * 171;
-    const xPos = 512 + 46 * (-5 + xOffset)
-    gl.uniform2fv(gl.getUniformLocation(program, "sunPos"), vec2(xOffset, yPos));
+    const xPos = 512 + 46 * (-5 + xOffset);
+    gl.uniform2fv(
+      gl.getUniformLocation(program, "sunPos"),
+      vec2(xOffset, yPos)
+    );
     gTranslate(xOffset, yOffset, -70);
-    gScale(0.5, 0.5, 0.5)
-    drawSphere()
+    gScale(0.5, 0.5, 0.5);
+    drawSphere();
   }
   toggleTextures();
-  gPop()
+  gPop();
+}
+
+function createGrainDepot() {
+  gTranslate(30.5, 0, -2.4);
+  // gTranslate(0, 0, -2.4);
+  gPush();
+  {
+    // Loader Base
+    drawCube();
+
+    gTranslate(0, 1.6, 0);
+    gRotate(-90, 1, 0, 0);
+    // Loader Body
+    gPush();
+    {
+      gScale(1.2, 1.2, 3);
+      drawCylinder();
+    }
+    gPop();
+    // Loader Top
+    gTranslate(0, 0, 2);
+    drawCone();
+    // Silo Body
+    gPush();
+    gTranslate(3, 0, -2.5);
+    {
+      gScale(2, 2, 4);
+      drawCylinder();
+    }
+    gPop();
+    // Silo Top
+    gTranslate(3, 0, 0);
+    drawCone();
+    // Silo, Loader connector
+    gPush();
+    {
+      gRotate(90, 1, 0, 0);
+      gTranslate(-1, -3.5, 0);
+      gScale(1, 0.2, 0.2);
+      drawCube();
+    }
+    gPop();
+  }
+  gPop();
+  gPush();
+  {
+    // Loader Shoot
+    gTranslate(0, 2, 0);
+    if (TIME > 18) {
+      gRotate(90, 0, 1, 0);
+    } else if (TIME > 15) {
+      gRotate((TIME - 15) * 30, 0, 1, 0);
+    }
+    gTranslate(-1.5, 0, 0);
+    gPush();
+    {
+      gScale(1, 0.1, 0.1);
+      drawCube();
+    }
+    gPop();
+    // Loader outer shoot
+    gPush();
+    {
+      gTranslate(-1, 0, 0);
+      gPush();
+      {
+        if (TIME > 19) {
+          gRotate(90, 0, 0, 1);
+        } else if (TIME > 17) {
+          gRotate((TIME - 17) * 30, 0, 0, 1);
+        }
+        gScale(0.5, 0.15, 0.2);
+        drawCube();
+      }
+      gPop();
+      // Grain pieces
+      for (let i = 0; i < 25; i++) {
+        gPush();
+        if (TIME > grainDropTimes[i] + 20) {
+          gTranslate(0, (grainDropTimes[i] - TIME - 20) % 2, 0);
+        }
+        gTranslate(...grainPositions[i]);
+        gScale(0.1, 0.1, 0.1);
+        drawSphere();
+        gPop();
+      }
+    }
+    gPop();
+  }
+  gPop();
 }
 
 function render() {
@@ -692,7 +799,7 @@ function render() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   eye = vec3(TIME, 3, 10);
-  
+
   eye[1] = eye[1] + 0;
 
   // set the projection matrix
@@ -736,7 +843,7 @@ function render() {
   // Add groundbox
   gPush();
   {
-    setColor(vec4(0.2, 0.5, 0.2, 1.0))
+    setColor(vec4(0.2, 0.5, 0.2, 1.0));
     gTranslate(0, -5, 0);
     gScale(500, 1, 500);
     drawCube();
@@ -745,14 +852,14 @@ function render() {
   // Create skybox
   gPush();
   {
-    toggleIsSkybox()
+    toggleIsSkybox();
     setColor(vec4(0, 0, 1, 1.0));
     gTranslate(30, -2, -80);
     gScale(50, 2, 0.1);
     drawCube();
-    toggleIsSkybox()
+    toggleIsSkybox();
   }
-  gPop()
+  gPop();
   gTranslate(0, -3.2, -10);
   buildTrain();
   createTrack();
@@ -771,6 +878,8 @@ function render() {
     gPop();
   }
   createSun();
+  createGrainDepot();
+
   gl.uniform1f(gl.getUniformLocation(program, "time"), TIME);
   at = vec3(0.95 * TIME, 2, 0);
   lookAt(eye, at, up);
