@@ -133,22 +133,22 @@ function loadImageTexture(tex, image) {
 
 function initTextures() {
   textureArray.push({});
-  loadFileTexture(textureArray[textureArray.length - 1], "train.jpg");
+  loadFileTexture(textureArray[textureArray.length - 1], "./assets/train.jpg");
 
   textureArray.push({});
-  loadFileTexture(textureArray[textureArray.length - 1], "locomotive.jpg");
+  loadFileTexture(textureArray[textureArray.length - 1], "./assets/locomotive.jpg");
 
   textureArray.push({});
-  loadFileTexture(textureArray[textureArray.length - 1], "tree.jpeg");
+  loadFileTexture(textureArray[textureArray.length - 1], "./assets/tree.jpeg");
 
   textureArray.push({});
-  loadFileTexture(textureArray[textureArray.length - 1], "sun.jpeg");
+  loadFileTexture(textureArray[textureArray.length - 1], "./assets/sun.jpeg");
 
   textureArray.push({});
-  loadFileTexture(textureArray[textureArray.length - 1], "mountain.jpeg");
+  loadFileTexture(textureArray[textureArray.length - 1], "./assets/mountain.jpeg");
 
   textureArray.push({});
-  loadFileTexture(textureArray[textureArray.length - 1], "silo.jpg");
+  loadFileTexture(textureArray[textureArray.length - 1], "./assets/silo.jpg");
 }
 
 function handleTextureLoaded(textureObj) {
@@ -415,6 +415,20 @@ function gPop() {
 // pushes the current modelMatrix in the stack MS
 function gPush() {
   MS.push(modelMatrix);
+}
+
+function createGroundBox() {
+    // Add groundbox
+  gl.uniform1i(gl.getUniformLocation(program, "isGround"), 1);
+  gPush();
+    {
+      setColor(vec4(0.2, 0.5, 0.2, 1.0));
+      gTranslate(0, -5, 0);
+      gScale(500, 1, 500);
+      drawCube();
+    }
+    gPop();
+    gl.uniform1i(gl.getUniformLocation(program, "isGround"), 0);
 }
 
 function createWheels() {
@@ -702,10 +716,10 @@ function createSun() {
     let xOffset = -5 + TIME + (TIME % (Math.PI * 8));
     let yOffset = 1.5 * Math.sin(TIME / 4);
     const yPos = yOffset * 171;
-    const xPos = 512 + 46 * (-5 + xOffset);
+    const xPos = 512/4 + 46 * (-5 + xOffset);
     gl.uniform2fv(
       gl.getUniformLocation(program, "sunPos"),
-      vec2(xOffset, yPos)
+      vec2(0, yPos)
     );
     gTranslate(xOffset, yOffset, -70);
     gScale(0.5, 0.5, 0.5);
@@ -895,15 +909,7 @@ function render() {
       frameCount = 0;
     }
   }
-  // Add groundbox
-  gPush();
-  {
-    setColor(vec4(0.2, 0.5, 0.2, 1.0));
-    gTranslate(0, -5, 0);
-    gScale(500, 1, 500);
-    drawCube();
-  }
-  gPop();
+  createGroundBox();
   // Create skybox
   gPush();
   {

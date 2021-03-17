@@ -68,8 +68,12 @@ precision mediump float;
 
 uniform sampler2D texture1;
 uniform int useTextures;
+// Toggle to check if the scene element is the skybox
 uniform int isSkybox;
+// current time in the scene
+uniform int isGround;
 uniform float time;
+// Coordinates of the sun object
 uniform vec2 sunPos;
 
 in vec4 fColor;
@@ -83,16 +87,21 @@ main()
 {
 
     vec4 c1,c2,c3 ;
-
     fragColor = fColor;
     if( useTextures == 1)
     {
         c1 = texture( texture1, fTexCoord );
         fragColor = c1;
     }
+    // Check if the shader should be applied to the scene element
     if (isSkybox == 1) {
-        fragColor = vec4(0.001 * sqrt( pow(gl_FragCoord.y + sunPos[1],2.0)), 0.2, 1.0, 1);
+        // Set the pixel color relative to the euclidean distance between the Y position of the sun.
+        // Calculate the amount of red to give to a pixel based on height of sun
+        float red = 0.001 * sqrt( pow(gl_FragCoord.y + sunPos[1],2.0));
+        // Set the output color of the pixel based on the amount of calculated red value
+        fragColor = vec4(red, 0.2, 1.0, 1);
     }
+
     fragColor.a = 1.0;
 
 }
