@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+import matplotlib.pyplot as plt
 
 MAX_DEPTH = 3
 CAMERA_POS = [0,0,0]
@@ -21,7 +22,7 @@ class Sphere:
         self.n      = int(data[15])
 
     def __str__(self):
-        return f'name {self.name} N: {self.n}'
+        return f'name {self.name}'
 
 class Light:
     def __init__(self, data):
@@ -53,13 +54,13 @@ class Hit:
         self.colour = [0,0,0]
 
 def hitCircle(ray, circle):
-    invM = [[1.0/circle.xScale, 0, 0, -circle.xPos],[0, 1.0/circle.yScale, 0, -circle.yPos],[0, 0, 1.0/circle.zScale, -circle.zPos]]
+    invM = [[1.0/circle.xScale, 0, 0, -circle.xPos],[0, 1.0/circle.yScale, 0, -circle.yPos],[0, 0, 1.0/circle.zScale, -circle.zPos], [0, 0, 0, 1]]
     invS = np.matmul(invM, ray.origin + [1])[:3]
     homoDir = np.append(ray.direction, 0)
     invC = np.matmul(invM, homoDir)[:3]
-    a = np.linalg.norm(invC)
+    a = np.linalg.norm(invC)**2
     b = 2.0 * np.dot(invS, invC)
-    c = np.linalg.norm(invS) - 1
+    c = np.linalg.norm(invS)**2 - 1
     discriminant = b*b - 4 * a * c
     if(discriminant < 0):
         return []
@@ -95,28 +96,26 @@ def printPPM(info, spheres, lights, outputFile):
     width = info["RES"]["x"]
     height = info["RES"]["y"]
     ppm_header = f'P6 {width} {height} {255}\n'
-    image = [0, 0, 0] * width * height
+    image = np.zeros([height,width,3])
     u = np.array([1, 0, 0])
     v = np.array([0, 1, 0])
     n = np.array([0, 0, -1])
-    for c in range(width):
-        for r in range(height):
+    for r in range(height):
+        if(r % 10 == 0):
+            print(r)
+        for c in range(width):
+        # must start in top right
             origin = CAMERA_POS
             xComp = info["RIGHT"] * (2.0 * c / width - 1)
-            yComp = info["TOP"] * (2.0 * r / height - 1)
+            yComp = info["TOP"] * (2.0 * (height - r) / height - 1)
             zComp = info["NEAR"]
             # Add X, Y and Z components into direction vector
             direction = np.add(xComp * u, yComp * v)
             direction = np.add(direction, zComp * n)
             ray = Ray(origin, direction)
             pixelColour = raytrace(ray, spheres, info)
-            startIndex = c * r * 3
-            image[startIndex]     = int(pixelColour[0] * 255)
-            image[startIndex + 1] = int(pixelColour[1] * 255)
-            image[startIndex + 2] = int(pixelColour[2] * 255)
-    with open('blue_example.ppm', 'wb') as f:
-        f.write(bytearray(ppm_header, 'ascii'))
-        f.write(bytearray(image))
+            image[r][c] = pixelColour
+    plt.imsave('image.png', image)
 
 def main():
     # Create objects to hold scene information
