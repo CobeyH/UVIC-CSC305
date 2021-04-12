@@ -59,13 +59,13 @@ def hitCircle(ray, circle):
     homoDir = np.append(ray.direction, 0)
     invC = np.matmul(invM, homoDir)[:3]
     a = np.linalg.norm(invC)**2
-    b = 2.0 * np.dot(invS, invC)
+    b = np.dot(invS, invC)
     c = np.linalg.norm(invS)**2 - 1
-    discriminant = b*b - 4 * a * c
+    discriminant = b*b - a * c
     if(discriminant < 0):
         return []
     else:
-        return [-b + np.sqrt(discriminant) / (2.0 * a), -b - np.sqrt(discriminant) / (2.0 * a)]
+        return [-b + np.sqrt(discriminant) / (a), -b - np.sqrt(discriminant) / (a)]
 
 
 def raytrace(ray, spheres, sceneInfo):
@@ -106,7 +106,7 @@ def printPPM(info, spheres, lights, outputFile):
         for c in range(width):
         # must start in top right
             origin = CAMERA_POS
-            xComp = info["RIGHT"] * (2.0 * c / width - 1)
+            xComp = info["RIGHT"] * (2.0 * float(c) / float(width) - 1)
             yComp = info["TOP"] * (2.0 * (height - r) / height - 1)
             zComp = info["NEAR"]
             # Add X, Y and Z components into direction vector
