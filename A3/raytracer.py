@@ -34,20 +34,13 @@ class Light:
         return f'name {self.name} Colour: {self.colour}'
 
 class Ray:
-    def __init__(self, origin, direction):
+    def __init__(self, origin, direction, depth=1):
         self.origin = origin
         self.direction = direction
-        self.depth = 1
+        self.depth = depth
 
     def __str__(self):
         return f'Origin: {self.origin} Direction: {self.direction}'
-
-class Hit:
-    def __init__(self):
-        self.norm   = [0,0,0]
-        self.t      = 100000
-        self.pos    = [0,0,0]
-        self.colour = [0,0,0]
 
 def hitCircle(ray, circle, invM):
     homoOrigin = np.append(ray.origin, 1)
@@ -63,20 +56,27 @@ def hitCircle(ray, circle, invM):
     else:
         return [-b / a + np.sqrt(discriminant) / (a), -b / a - np.sqrt(discriminant) / (a)]
 
-def getReflectedRay(ray, closestCircle, P, N):
+def getReflectedRay(incident, P, N):
     normN = N / np.linalg.norm(N)
-    # v = -2 * np.dot(N, ray.direction)
-    return 1
+    v = -2 * np.dot(N, incident.direction) * N + incident.direction
+    return Ray(P, v, incident.depth + 1)
 
 def getLightValue(light, spheres, P, hitSphere, N):
     L = light.pos - P
     rayToLight = Ray(P, L)
     t, nearestSphere, _ = getNearestIntersect(spheres, rayToLight)
     if nearestSphere is not None:
-        return 0 # Shadow
+        return [0,0,0] # Shadow
     normN = N / np.linalg.norm(N)
     normL = L / np.linalg.norm(L)
-    return hitSphere.kd * np.multiply(light.colour, np.dot(normN, normL)) * hitSphere.colour
+    diffuse = hitSphere.kd * np.multiply(light.colour, np.dot(normN, normL)) * hitSphere.colour
+    V = np.array(P) * -1
+    normV = V / np.linalg.norm(V)
+    R = 2*np.multiply(np.dot(normN, L), normN) - L
+    normR = R / np.linalg.norm(R)
+    RdotV = np.dot(normR, normV)**hitSphere.n
+    specular = hitSphere.ks * np.multiply(light.colour, RdotV)
+    return np.add(diffuse, specular)
 
 
 def getNearestIntersect(spheres, ray):
@@ -96,7 +96,7 @@ def getNearestIntersect(spheres, ray):
         P = ray.origin + ray.direction * t
         N = np.subtract(P, center)
         homoN = np.append(N, 1)
-        inversed = np.matmul(homoN, invM)
+        inversed = np.matmul(homoN, np.linalg.inv(M))
         invN = np.matmul(np.linalg.inv(np.transpose(M)), inversed)[:3]
     return (t, closestCircle, invN)
 
@@ -106,14 +106,18 @@ def raytrace(ray, spheres, lights, sceneInfo):
         return [0, 0, 0]
     nearestHit, closestCircle, N = getNearestIntersect(spheres, ray)
     if not closestCircle:
-        return sceneInfo["BACK"]
+        if ray.depth == 1:
+            return sceneInfo["BACK"]
+        else:
+            return [0,0,0]
     P = ray.origin + ray.direction * nearestHit
     diffuseLight = np.array([0,0,0])
     for light in lights:
         diffuseLight = np.add(diffuseLight, getLightValue(light, spheres, P, closestCircle, N))
 
-    # refRay = getReflectedRay(ray, closestCircle, P)
-    return closestCircle.ka * np.multiply(sceneInfo["AMBIENT"], closestCircle.colour) + diffuseLight
+    refRay = getReflectedRay(ray, P, N)
+    reflectCol = raytrace(refRay, spheres, lights, sceneInfo)
+    return closestCircle.ka * np.multiply(sceneInfo["AMBIENT"], closestCircle.colour) + diffuseLight + closestCircle.kr * np.array(reflectCol)
 
 # Function that prints all file information for debugging purposes
 def printData(sceneInfo, spheres, lights, outputFile): 
@@ -147,7 +151,7 @@ def printPPM(info, spheres, lights, outputFile):
             ray = Ray(origin, direction)
             pixelColour = raytrace(ray, spheres, lights, info)
             image[r][c] = np.clip(pixelColour, 0, 1)
-    plt.imsave('image.png', image)
+    plt.imsave(outputFile, image)
 
 def main():
     # Create objects to hold scene information
