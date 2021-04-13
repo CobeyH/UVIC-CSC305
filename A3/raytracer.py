@@ -70,6 +70,7 @@ def getLightValue(light, spheres, P, hitSphere, N):
     normN = N / np.linalg.norm(N)
     normL = L / np.linalg.norm(L)
     diffuse = hitSphere.kd * np.multiply(light.colour, np.dot(normN, normL)) * hitSphere.colour
+    # Specular calculations
     V = np.array(P) * -1
     normV = V / np.linalg.norm(V)
     R = 2*np.multiply(np.dot(normN, L), normN) - L
@@ -83,7 +84,6 @@ def getNearestIntersect(spheres, ray):
     closestCircle = None
     t = 100000
     for circle in spheres:
-        M = [[circle.xScale, 0, 0, circle.xPos],[0, circle.yScale, 0, circle.yPos], [0, 0, circle.zScale, circle.zPos], [0, 0, 0, 1]]
         invM = [[1/circle.xScale, 0, 0, -circle.xPos/circle.xScale],[0, 1/circle.yScale, 0, -circle.yPos/circle.yScale], [0, 0, 1/circle.zScale, -circle.zPos/circle.zScale], [0, 0, 0, 1]]
         nextHits = hitCircle(ray, circle, invM)
         for hit in nextHits:
@@ -92,6 +92,7 @@ def getNearestIntersect(spheres, ray):
                 closestCircle = circle
     invN = None
     if closestCircle is not None:
+        M = [[closestCircle.xScale, 0, 0, closestCircle.xPos],[0, closestCircle.yScale, 0, closestCircle.yPos], [0, 0, closestCircle.zScale, closestCircle.zPos], [0, 0, 0, 1]]
         center = np.array([closestCircle.xPos, closestCircle.yPos, closestCircle.zPos])
         P = ray.origin + ray.direction * t
         N = np.subtract(P, center)
