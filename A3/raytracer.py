@@ -83,7 +83,8 @@ def getNearestIntersect(spheres, ray):
     closestCircle = None
     t = 100000
     for circle in spheres:
-        invM = np.linalg.inv([[circle.xScale, 0, 0, circle.xPos],[0, circle.yScale, 0, circle.yPos],[0, 0, circle.zScale, circle.zPos], [0, 0, 0, 1]])
+        M = [[circle.xScale, 0, 0, circle.xPos],[0, circle.yScale, 0, circle.yPos], [0, 0, circle.zScale, circle.zPos], [0, 0, 0, 1]]
+        invM = [[1/circle.xScale, 0, 0, -circle.xPos/circle.xScale],[0, 1/circle.yScale, 0, -circle.yPos/circle.yScale], [0, 0, 1/circle.zScale, -circle.zPos/circle.zScale], [0, 0, 0, 1]]
         nextHits = hitCircle(ray, circle, invM)
         for hit in nextHits:
             if hit > 0.000001 and hit < t:
@@ -95,7 +96,8 @@ def getNearestIntersect(spheres, ray):
         P = ray.origin + ray.direction * t
         N = np.subtract(P, center)
         homoN = np.append(N, 1)
-        invN = np.matmul(np.transpose(invM), homoN)[:3]
+        inversed = np.matmul(homoN, invM)
+        invN = np.matmul(np.linalg.inv(np.transpose(M)), inversed)[:3]
     return (t, closestCircle, invN)
 
 
@@ -106,8 +108,6 @@ def raytrace(ray, spheres, lights, sceneInfo):
     if not closestCircle:
         return sceneInfo["BACK"]
     P = ray.origin + ray.direction * nearestHit
-    center = np.array([closestCircle.xPos, closestCircle.yPos, closestCircle.zPos])
-    # N = np.subtract(P, center)
     diffuseLight = np.array([0,0,0])
     for light in lights:
         diffuseLight = np.add(diffuseLight, getLightValue(light, spheres, P, closestCircle, N))
