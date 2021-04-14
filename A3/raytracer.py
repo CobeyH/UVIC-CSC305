@@ -1,6 +1,5 @@
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
 
 MAX_DEPTH = 3
 CAMERA_POS = [0,0,0]
@@ -145,10 +144,7 @@ def raytrace(ray, spheres, lights, sceneInfo):
         diffuseLight = np.add(diffuseLight, getLightValue(light, spheres, P, closestCircle, N, sceneInfo["NEAR"], side))
     ambient = closestCircle.ka * np.multiply(sceneInfo["AMBIENT"], closestCircle.colour)
     refRay = getReflectedRay(ray, P, N)
-    reflectCol = [0,0,0]
-    if closestCircle.kr > 0:
-        reflectCol = raytrace(refRay, spheres, lights, sceneInfo)
-    return ambient + diffuseLight + closestCircle.kr * np.array(reflectCol)
+    return ambient + diffuseLight + closestCircle.kr * np.array(raytrace(refRay, spheres, lights, sceneInfo))
 
 # Function that prints all file information for debugging purposes
 def printData(sceneInfo, spheres, lights, outputFile): 
@@ -163,7 +159,7 @@ def printPPM(info, spheres, lights, outputFile):
     width = info["RES"]["x"]
     height = info["RES"]["y"]
     ppm_header = f'P6 {width} {height} {255}\n'
-    image = np.zeros([height,width,3])
+    image = np.zeros([width * height * 3])
     u = np.array([1, 0, 0])
     v = np.array([0, 1, 0])
     n = np.array([0, 0, -1])
@@ -171,7 +167,9 @@ def printPPM(info, spheres, lights, outputFile):
         if(r % 10 == 0):
             print(r)
         for c in range(width):
-        # must start in top right
+            # if c == 330 and r == 265:
+            #     print()
+            # must start in top right
             origin = CAMERA_POS
             xComp = info["RIGHT"] * (2.0 * float(c) / float(width) - 1)
             yComp = info["TOP"] * (2.0 * (height - r) / height - 1)
@@ -181,8 +179,16 @@ def printPPM(info, spheres, lights, outputFile):
             direction = np.add(direction, zComp * n)
             ray = Ray(origin, direction)
             pixelColour = raytrace(ray, spheres, lights, info)
-            image[r][c] = np.clip(pixelColour, 0, 1)
-    plt.imsave(outputFile, image)
+            startIndex = 3 * (r * width + c)
+            clippedPix = np.clip(pixelColour, 0, 1) * 255
+            image[startIndex]     = int(clippedPix[0])
+            image[startIndex + 1] = int(clippedPix[1])
+            image[startIndex + 2] = int(clippedPix[2])
+    with open(outputFile, 'wb') as f:
+     	f.write(bytearray(ppm_header, 'ascii'))
+     	image.astype('int8').tofile(f)
+
+    # plt.imsave(outputFile, image)
 
 def main():
     # Create objects to hold scene information
@@ -195,9 +201,9 @@ def main():
     with open(fileName) as fp:
         for i, line in enumerate(fp):
             sl = line.split()
-            if(i < 5):
-                sceneInfo[sl[0]] = float(sl[1])
-            elif(sl[0] == "RES"):
+            if len(sl) == 0:
+                continue
+            if(sl[0] == "RES"):
                 sceneInfo["RES"] = {}
                 sceneInfo["RES"]["x"] = int(sl[1])
                 sceneInfo["RES"]["y"] = int(sl[2])
@@ -212,7 +218,7 @@ def main():
             elif(sl[0] == "OUTPUT"):
                 outputFile = sl[1]
             else:
-                print("Unexpected line identifier encountered")
+               sceneInfo[sl[0]] = float(sl[1])
     printData(sceneInfo, spheres, lights, outputFile)
     printPPM(sceneInfo, spheres, lights, outputFile)
 
