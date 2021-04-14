@@ -60,18 +60,38 @@ def getReflectedRay(incident, P, N):
     v = -2 * np.dot(N, incident.direction) * N + incident.direction
     return Ray(P, v, incident.depth + 1)
 
+def contributesLight(startSphere, endSphere, side, distToIntersect, dirToLight):
+    distToLight = np.dot(dirToLight, dirToLight)
+    hitNear = True if side == "near" else False
+    hitSphere = endSphere is not None
+    hitSelf = False if not hitSphere else startSphere.name == endSphere.name
+
+    # Light bounces off near face and to a light without hitting anything
+    if not hitSphere and hitNear:
+         return True
+    # Light bounces of far face and the sphere has a light inside of it
+    elif hitSelf and not hitNear and distToLight < distToIntersect:
+        return True
+    # Light bounces of near face and hits a sphere before hitting a light
+    elif not hitSelf and hitNear:
+        return False
+    else:
+        return False
+
+
 def getLightValue(light, spheres, P, hitSphere, N, near, side):
     L = light.pos - P
     rayToLight = Ray(P, L)
     t, nearestSphere, _, _ = getNearestIntersect(spheres, rayToLight)
-    if nearestSphere is not None or (side == "back" and hitSphere.name != nearestSphere.name):
+    if(not contributesLight(hitSphere, nearestSphere, side, t, L)):
         return [0,0,0] # Shadow
     normN = N / np.linalg.norm(N)
     normL = L / np.linalg.norm(L)
+    if side == "far":
+        normN = -normN
     diffuse = hitSphere.kd * np.multiply(light.colour, np.dot(normN, normL)) * hitSphere.colour
-    if side == "back":
-        print("Back Side")
     # Specular calculations
+    specular = [0,0,0]
     V = np.array(P) * -1
     normV = V / np.linalg.norm(V)
     R = 2*np.multiply(np.dot(normN, L), normN) - L
@@ -89,7 +109,8 @@ def getNearestIntersect(spheres, ray, near=-1):
         nextHits = hitCircle(ray, circle, invM)
         for hit in nextHits:
             zDist = 0
-            if -1 != near:
+            # Don't calculate intersections in front of the near plane
+            if near != -1:
                 distAlongLine = np.array(ray.direction) * hit
                 zDist = np.dot(np.array([0,0,-1]), distAlongLine)
             if hit > 0.000001 and hit < t and zDist > near:
@@ -124,7 +145,9 @@ def raytrace(ray, spheres, lights, sceneInfo):
         diffuseLight = np.add(diffuseLight, getLightValue(light, spheres, P, closestCircle, N, sceneInfo["NEAR"], side))
     ambient = closestCircle.ka * np.multiply(sceneInfo["AMBIENT"], closestCircle.colour)
     refRay = getReflectedRay(ray, P, N)
-    reflectCol = raytrace(refRay, spheres, lights, sceneInfo)
+    reflectCol = [0,0,0]
+    if closestCircle.kr > 0:
+        reflectCol = raytrace(refRay, spheres, lights, sceneInfo)
     return ambient + diffuseLight + closestCircle.kr * np.array(reflectCol)
 
 # Function that prints all file information for debugging purposes
