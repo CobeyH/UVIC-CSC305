@@ -57,19 +57,20 @@ def hitCircle(ray, circle, invM):
         return [-b / a + np.sqrt(discriminant) / (a), -b / a - np.sqrt(discriminant) / (a)]
 
 def getReflectedRay(incident, P, N):
-    normN = N / np.linalg.norm(N)
     v = -2 * np.dot(N, incident.direction) * N + incident.direction
     return Ray(P, v, incident.depth + 1)
 
-def getLightValue(light, spheres, P, hitSphere, N):
+def getLightValue(light, spheres, P, hitSphere, N, near, side):
     L = light.pos - P
     rayToLight = Ray(P, L)
-    t, nearestSphere, _ = getNearestIntersect(spheres, rayToLight)
-    if nearestSphere is not None:
+    t, nearestSphere, _, _ = getNearestIntersect(spheres, rayToLight)
+    if nearestSphere is not None or (side == "back" and hitSphere.name != nearestSphere.name):
         return [0,0,0] # Shadow
     normN = N / np.linalg.norm(N)
     normL = L / np.linalg.norm(L)
     diffuse = hitSphere.kd * np.multiply(light.colour, np.dot(normN, normL)) * hitSphere.colour
+    if side == "back":
+        print("Back Side")
     # Specular calculations
     V = np.array(P) * -1
     normV = V / np.linalg.norm(V)
@@ -79,18 +80,23 @@ def getLightValue(light, spheres, P, hitSphere, N):
     specular = hitSphere.ks * np.multiply(light.colour, RdotV)
     return np.add(diffuse, specular)
 
-
-def getNearestIntersect(spheres, ray):
+# Returns the nearest intersection between the spheres and a ray
+def getNearestIntersect(spheres, ray, near=-1):
     closestCircle = None
     t = 100000
     for circle in spheres:
         invM = [[1/circle.xScale, 0, 0, -circle.xPos/circle.xScale],[0, 1/circle.yScale, 0, -circle.yPos/circle.yScale], [0, 0, 1/circle.zScale, -circle.zPos/circle.zScale], [0, 0, 0, 1]]
         nextHits = hitCircle(ray, circle, invM)
         for hit in nextHits:
-            if hit > 0.000001 and hit < t:
+            zDist = 0
+            if -1 != near:
+                distAlongLine = np.array(ray.direction) * hit
+                zDist = np.dot(np.array([0,0,-1]), distAlongLine)
+            if hit > 0.000001 and hit < t and zDist > near:
                 t = hit
                 closestCircle = circle
     invN = None
+    side = None
     if closestCircle is not None:
         M = [[closestCircle.xScale, 0, 0, closestCircle.xPos],[0, closestCircle.yScale, 0, closestCircle.yPos], [0, 0, closestCircle.zScale, closestCircle.zPos], [0, 0, 0, 1]]
         center = np.array([closestCircle.xPos, closestCircle.yPos, closestCircle.zPos])
@@ -99,13 +105,14 @@ def getNearestIntersect(spheres, ray):
         homoN = np.append(N, 1)
         inversed = np.matmul(homoN, np.linalg.inv(M))
         invN = np.matmul(np.linalg.inv(np.transpose(M)), inversed)[:3]
-    return (t, closestCircle, invN)
+        side = "far" if np.dot(ray.direction, invN) > 0 else "near"
+    return (t, closestCircle, invN, side)
 
 
 def raytrace(ray, spheres, lights, sceneInfo):
     if ray.depth > MAX_DEPTH:
         return [0, 0, 0]
-    nearestHit, closestCircle, N = getNearestIntersect(spheres, ray)
+    nearestHit, closestCircle, N, side = getNearestIntersect(spheres, ray, sceneInfo["NEAR"])
     if not closestCircle:
         if ray.depth == 1:
             return sceneInfo["BACK"]
@@ -114,11 +121,11 @@ def raytrace(ray, spheres, lights, sceneInfo):
     P = ray.origin + ray.direction * nearestHit
     diffuseLight = np.array([0,0,0])
     for light in lights:
-        diffuseLight = np.add(diffuseLight, getLightValue(light, spheres, P, closestCircle, N))
-
+        diffuseLight = np.add(diffuseLight, getLightValue(light, spheres, P, closestCircle, N, sceneInfo["NEAR"], side))
+    ambient = closestCircle.ka * np.multiply(sceneInfo["AMBIENT"], closestCircle.colour)
     refRay = getReflectedRay(ray, P, N)
     reflectCol = raytrace(refRay, spheres, lights, sceneInfo)
-    return closestCircle.ka * np.multiply(sceneInfo["AMBIENT"], closestCircle.colour) + diffuseLight + closestCircle.kr * np.array(reflectCol)
+    return ambient + diffuseLight + closestCircle.kr * np.array(reflectCol)
 
 # Function that prints all file information for debugging purposes
 def printData(sceneInfo, spheres, lights, outputFile): 
