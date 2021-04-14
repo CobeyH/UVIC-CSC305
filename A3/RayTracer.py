@@ -41,7 +41,11 @@ class Ray:
     def __str__(self):
         return f'Origin: {self.origin} Direction: {self.direction}'
 
-def hitCircle(ray, circle, invM):
+# Returns the distance to the intersections between a ray and a sphere.
+# 0 solutions means no intersections
+# 1 solution means the ray in a tangent line
+# 2 solutions means the ray hits the front of the sphere and pierces through the sphere to and hits the back
+def hitSphere(ray, sphere, invM):
     homoOrigin = np.append(ray.origin, 1)
     invS = np.matmul(invM, homoOrigin)[:3]
     homoDir = np.append(ray.direction, 0)
@@ -55,11 +59,16 @@ def hitCircle(ray, circle, invM):
     else:
         return [-b / a + np.sqrt(discriminant) / (a), -b / a - np.sqrt(discriminant) / (a)]
 
+# Returns the reflected off a sphere from an initial ray
+# incident: the incoming ray that will reflect
+# P: the point that incident intersects the sphere
+# N: normal vector off the circle at point P
 def getReflectedRay(incident, P, N):
     normN = N / np.linalg.norm(N)
     v = -2 * np.dot(normN, incident.direction) * normN + incident.direction
     return Ray(P, v, incident.depth + 1)
 
+# Returns True if a light should be included in the local illumination and False if the light is obscured
 def contributesLight(startSphere, endSphere, side, distToIntersect, dirToLight):
     distToLight = np.dot(dirToLight, dirToLight)
     hitNear = True if side == "near" else False
@@ -78,7 +87,7 @@ def contributesLight(startSphere, endSphere, side, distToIntersect, dirToLight):
     else:
         return False
 
-
+# Returns the combined diffuse and specular value that a light contributes to a pixel
 def getLightValue(light, spheres, P, hitSphere, N, near, side):
     L = light.pos - P
     rayToLight = Ray(P, L)
@@ -100,13 +109,13 @@ def getLightValue(light, spheres, P, hitSphere, N, near, side):
     specular = hitSphere.ks * np.multiply(light.colour, RdotV)
     return np.add(diffuse, specular)
 
-# Returns the nearest intersection between the spheres and a ray
+# Returns the nearest intersection between the spheres and a ray, the sphere that was hit, and the side (near or far) that the ray hit
 def getNearestIntersect(spheres, ray, near=-1):
     closestCircle = None
     t = 100000
-    for circle in spheres:
-        invM = [[1/circle.xScale, 0, 0, -circle.xPos/circle.xScale],[0, 1/circle.yScale, 0, -circle.yPos/circle.yScale], [0, 0, 1/circle.zScale, -circle.zPos/circle.zScale], [0, 0, 0, 1]]
-        nextHits = hitCircle(ray, circle, invM)
+    for sphere in spheres:
+        invM = [[1/sphere.xScale, 0, 0, -sphere.xPos/sphere.xScale],[0, 1/sphere.yScale, 0, -sphere.yPos/sphere.yScale], [0, 0, 1/sphere.zScale, -sphere.zPos/sphere.zScale], [0, 0, 0, 1]]
+        nextHits = hitSphere(ray, sphere, invM)
         for hit in nextHits:
             zDist = 0
             # Don't calculate intersections in front of the near plane
@@ -115,9 +124,10 @@ def getNearestIntersect(spheres, ray, near=-1):
                 zDist = np.dot(np.array([0,0,-1]), distAlongLine)
             if hit > 0.000001 and hit < t and (zDist > near or ray.depth != 1):
                 t = hit
-                closestCircle = circle
+                closestCircle = sphere
     invN = None
     side = None
+    # Calculate the normal vector if a sphere was hit
     if closestCircle is not None:
         M = [[closestCircle.xScale, 0, 0, closestCircle.xPos],[0, closestCircle.yScale, 0, closestCircle.yPos], [0, 0, closestCircle.zScale, closestCircle.zPos], [0, 0, 0, 1]]
         center = np.array([closestCircle.xPos, closestCircle.yPos, closestCircle.zPos])
@@ -129,7 +139,7 @@ def getNearestIntersect(spheres, ray, near=-1):
         side = "far" if np.dot(ray.direction, invN) > 0 else "near"
     return (t, closestCircle, invN, side)
 
-
+# Main function that returns the colour for a pixel
 def raytrace(ray, spheres, lights, sceneInfo):
     if ray.depth > MAX_DEPTH:
         return [0, 0, 0]
@@ -156,6 +166,7 @@ def printData(sceneInfo, spheres, lights, outputFile):
         print(light)
     print(outputFile)
 
+# Iterates though each pixel and calls the raytrace function
 def printPPM(info, spheres, lights, outputFile):
     width = info["RES"]["x"]
     height = info["RES"]["y"]
@@ -218,6 +229,7 @@ def main():
                 outputFile = sl[1]
             else:
                sceneInfo[sl[0]] = float(sl[1])
+    # Do ray tracing and write output to PPM
     printPPM(sceneInfo, spheres, lights, outputFile)
 
 
