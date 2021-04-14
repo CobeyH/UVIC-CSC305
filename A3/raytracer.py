@@ -164,12 +164,11 @@ def printPPM(info, spheres, lights, outputFile):
     u = np.array([1, 0, 0])
     v = np.array([0, 1, 0])
     n = np.array([0, 0, -1])
+    percentInc = int(height / 10)
     for r in range(height):
-        if(r % 10 == 0):
-            print(r)
+        if(r % percentInc == 0):
+            print(f'{r / percentInc * 10}% Complete')
         for c in range(width):
-            if c == 330 and r == 265:
-                print()
             # must start in top right
             origin = CAMERA_POS
             xComp = info["RIGHT"] * (2.0 * float(c) / float(width) - 1)
@@ -188,8 +187,7 @@ def printPPM(info, spheres, lights, outputFile):
     with open(outputFile, 'wb') as f:
      	f.write(bytearray(ppm_header, 'ascii'))
      	image.astype('int8').tofile(f)
-
-    # plt.imsave(outputFile, image)
+    print("Render Complete. Output to", outputFile)
 
 def main():
     # Create objects to hold scene information
@@ -220,7 +218,6 @@ def main():
                 outputFile = sl[1]
             else:
                sceneInfo[sl[0]] = float(sl[1])
-    printData(sceneInfo, spheres, lights, outputFile)
     printPPM(sceneInfo, spheres, lights, outputFile)
 
 
