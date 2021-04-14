@@ -56,7 +56,8 @@ def hitCircle(ray, circle, invM):
         return [-b / a + np.sqrt(discriminant) / (a), -b / a - np.sqrt(discriminant) / (a)]
 
 def getReflectedRay(incident, P, N):
-    v = -2 * np.dot(N, incident.direction) * N + incident.direction
+    normN = N / np.linalg.norm(N)
+    v = -2 * np.dot(normN, incident.direction) * normN + incident.direction
     return Ray(P, v, incident.depth + 1)
 
 def contributesLight(startSphere, endSphere, side, distToIntersect, dirToLight):
@@ -112,7 +113,7 @@ def getNearestIntersect(spheres, ray, near=-1):
             if near != -1:
                 distAlongLine = np.array(ray.direction) * hit
                 zDist = np.dot(np.array([0,0,-1]), distAlongLine)
-            if hit > 0.000001 and hit < t and zDist > near:
+            if hit > 0.000001 and hit < t and (zDist > near or ray.depth != 1):
                 t = hit
                 closestCircle = circle
     invN = None
@@ -167,8 +168,8 @@ def printPPM(info, spheres, lights, outputFile):
         if(r % 10 == 0):
             print(r)
         for c in range(width):
-            # if c == 330 and r == 265:
-            #     print()
+            if c == 330 and r == 265:
+                print()
             # must start in top right
             origin = CAMERA_POS
             xComp = info["RIGHT"] * (2.0 * float(c) / float(width) - 1)
