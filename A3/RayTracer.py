@@ -41,18 +41,22 @@ class Ray:
     def __str__(self):
         return f'Origin: {self.origin} Direction: {self.direction}'
 
+def normalize(v):
+    return v / magnitude(v)
+
+def magnitude(v):
+    return (v[0]**2 + v[1]**2 + v[2]**2)**(1/2)
+
 # Returns the distance to the intersections between a ray and a sphere.
 # 0 solutions means no intersections
 # 1 solution means the ray in a tangent line
 # 2 solutions means the ray hits the front of the sphere and pierces through the sphere to and hits the back
-def hitSphere(ray, sphere, invM):
-    homoOrigin = np.append(ray.origin, 1)
+def hitSphere(ray, sphere, invM, homoOrigin, homoDir):
     invS = np.matmul(invM, homoOrigin)[:3]
-    homoDir = np.append(ray.direction, 0)
     invC = np.matmul(invM, homoDir)[:3]
-    a = np.linalg.norm(invC)**2
+    a = magnitude(invC)**2
     b = np.dot(invS, invC)
-    c = np.linalg.norm(invS)**2 - 1
+    c = magnitude(invS)**2 - 1
     discriminant = b*b - a * c
     if(discriminant < 0):
         return []
@@ -64,7 +68,7 @@ def hitSphere(ray, sphere, invM):
 # P: the point that incident intersects the sphere
 # N: normal vector off the circle at point P
 def getReflectedRay(incident, P, N):
-    normN = N / np.linalg.norm(N)
+    normN = normalize(N)
     v = -2 * np.dot(normN, incident.direction) * normN + incident.direction
     return Ray(P, v, incident.depth + 1)
 
@@ -94,17 +98,17 @@ def getLightValue(light, spheres, P, hitSphere, N, near, side):
     t, nearestSphere, _, _ = getNearestIntersect(spheres, rayToLight)
     if(not contributesLight(hitSphere, nearestSphere, side, t, L)):
         return [0,0,0] # Shadow
-    normN = N / np.linalg.norm(N)
-    normL = L / np.linalg.norm(L)
+    normN = normalize(N)
+    normL = normalize(L)
     if side == "far":
         normN = -normN
     diffuse = hitSphere.kd * np.multiply(light.colour, np.dot(normN, normL)) * hitSphere.colour
     # Specular calculations
     specular = [0,0,0]
     V = np.array(P) * -1
-    normV = V / np.linalg.norm(V)
+    normV = normalize(V)
     R = 2*np.multiply(np.dot(normN, L), normN) - L
-    normR = R / np.linalg.norm(R)
+    normR = normalize(R)
     RdotV = np.dot(normR, normV)**hitSphere.n
     specular = hitSphere.ks * np.multiply(light.colour, RdotV)
     return np.add(diffuse, specular)
@@ -115,7 +119,9 @@ def getNearestIntersect(spheres, ray, near=-1):
     t = 100000
     for sphere in spheres:
         invM = [[1/sphere.xScale, 0, 0, -sphere.xPos/sphere.xScale],[0, 1/sphere.yScale, 0, -sphere.yPos/sphere.yScale], [0, 0, 1/sphere.zScale, -sphere.zPos/sphere.zScale], [0, 0, 0, 1]]
-        nextHits = hitSphere(ray, sphere, invM)
+        homoOrigin = np.append(ray.origin, 1)
+        homoDir = np.append(ray.direction, 0)
+        nextHits = hitSphere(ray, sphere, invM, homoOrigin, homoDir)
         for hit in nextHits:
             zDist = 0
             # Don't calculate intersections in front of the near plane
